@@ -1,0 +1,191 @@
+{
+  "name": "AI Task Generation - n8n v1.102.4 Compatible",
+  "description": "AI task generation portion for n8n workflow using OpenRouter API with robust fallback handling",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-tasks",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger-001",
+      "name": "Webhook - Project Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "ai-tasks-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and validate form data from webhook\nconst body = $json.body || $json;\nconst projectDescription = body.projectDescription || body['Project Description'] || '';\nconst boardId = body.boardId || body['Monday Board ID'] || '';\nconst groupId = body.groupId || body['Group ID (Optional)'] || null;\n\n// Validation with detailed error messages\nif (!projectDescription || projectDescription.trim().length < 10) {\n  return [{\n    json: {\n      success: false,\n      error: 'Project description must be at least 10 characters long',\n      timestamp: new Date().toISOString(),\n      validation: 'failed'\n    }\n  }];\n}\n\nif (!boardId || !/^\\d+$/.test(boardId.toString().trim())) {\n  return [{\n    json: {\n      success: false,\n      error: 'Board ID must be a valid number (digits only)',\n      timestamp: new Date().toISOString(),\n      validation: 'failed'\n    }\n  }];\n}\n\n// Return validated data\nreturn [{\n  json: {\n    success: true,\n    projectDescription: projectDescription.trim(),\n    boardId: boardId.toString().trim(),\n    groupId: groupId ? groupId.toString().trim() : null,\n    timestamp: new Date().toISOString(),\n    validation: 'passed'\n  }\n}];"
+      },
+      "id": "validate-input-001",
+      "name": "Validate Input Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $credentials.httpHeaderAuth.headerValue }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": {
+          "model": "openai/gpt-4o-mini",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an expert project manager with 15+ years of experience in software development, product management, and team leadership. Your task is to break down projects into realistic, actionable tasks that cover the complete project lifecycle from planning to deployment."
+            },
+            {
+              "role": "user",
+              "content": "=Generate exactly 10 realistic, professional project tasks for this project:\n\n**Project Description:**\n{{ $json.projectDescription }}\n\n**Requirements:**\n- Generate EXACTLY 10 tasks (no more, no less)\n- Each task must be specific, actionable, and realistic\n- Include realistic time estimates in hours (8-48 hours per task)\n- Cover all project phases: Planning, Design, Development, Testing, Deployment\n- Use priority levels: High, Medium, Low\n- Include appropriate assignee roles (Project Manager, Developer, Designer, etc.)\n- Write clear, detailed descriptions with acceptance criteria\n- Title must be 50 characters or less\n\n**Response Format:**\nReturn ONLY a valid JSON array with this exact structure:\n[{\"title\":\"Task Name (max 50 chars)\",\"description\":\"Detailed description with clear acceptance criteria and deliverables\",\"priority\":\"High\",\"estimatedHours\":24,\"phase\":\"Planning\",\"assignee\":\"Project Manager\"}]\n\n**CRITICAL:** Return ONLY the JSON array, no additional text, explanations, or formatting."
+            }
+          ],
+          "temperature": 0.7,
+          "max_tokens": 3000,
+          "top_p": 0.9,
+          "frequency_penalty": 0.1
+        }
+      },
+      "id": "openrouter-ai-001",
+      "name": "OpenRouter - Generate Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [720, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openrouter-api-key",
+          "name": "OpenRouter API Key"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "jsCode": "let tasks = [];\nlet aiSuccess = false;\nlet errorMessage = '';\n\n// Get the validated input data\nconst inputData = $('Validate Input Data').first().json;\nconst projectDescription = inputData.projectDescription;\n\n// Try to parse AI response\ntry {\n  const httpResponse = $input.first();\n  \n  // Check if HTTP request was successful\n  if (httpResponse.json && httpResponse.json.choices && httpResponse.json.choices.length > 0) {\n    const aiResponse = httpResponse.json.choices[0].message.content;\n    console.log('AI Response received, length:', aiResponse.length);\n    \n    // Extract JSON array from response (handle potential markdown formatting)\n    let jsonContent = aiResponse.trim();\n    \n    // Remove markdown code blocks if present\n    jsonContent = jsonContent.replace(/```json\\s*/, '').replace(/```\\s*$/, '');\n    \n    // Find JSON array in the response\n    const jsonMatch = jsonContent.match(/\\[[\\s\\S]*\\]/);\n    if (jsonMatch) {\n      const parsedTasks = JSON.parse(jsonMatch[0]);\n      \n      if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {\n        // Validate and sanitize each task\n        tasks = parsedTasks.slice(0, 10).map((task, index) => ({\n          title: (task.title || `Task ${index + 1}`).substring(0, 50),\n          description: task.description || 'Task description not provided',\n          priority: ['High', 'Medium', 'Low'].includes(task.priority) ? task.priority : 'Medium',\n          estimatedHours: Number(task.estimatedHours) > 0 ? Number(task.estimatedHours) : 16,\n          phase: ['Planning', 'Design', 'Development', 'Testing', 'Deployment'].includes(task.phase) ? task.phase : 'Development',\n          assignee: task.assignee || 'Team Member'\n        }));\n        \n        aiSuccess = true;\n        console.log('Successfully parsed', tasks.length, 'tasks from AI');\n      }\n    }\n  } else {\n    errorMessage = 'Invalid AI response structure';\n  }\n} catch (error) {\n  console.log('AI parsing failed:', error.message);\n  errorMessage = error.message;\n}\n\n// Robust fallback tasks if AI fails or returns insufficient tasks\nif (!aiSuccess || tasks.length === 0) {\n  console.log('Using fallback tasks due to:', errorMessage || 'AI parsing failure');\n  \n  const shortDesc = projectDescription.substring(0, 80);\n  \n  tasks = [\n    {\n      title: \"Project Requirements & Planning\",\n      description: `Define comprehensive project scope, gather detailed requirements, and create project timeline for: ${shortDesc}. Deliverables: Requirements document, project plan, resource allocation, risk assessment.`,\n      priority: \"High\",\n      estimatedHours: 20,\n      phase: \"Planning\",\n      assignee: \"Project Manager\"\n    },\n    {\n      title: \"System Architecture Design\",\n      description: \"Design system architecture, database schema, technology stack selection, and integration patterns. Deliverables: Architecture diagrams, technical specifications, database design.\",\n      priority: \"High\",\n      estimatedHours: 24,\n      phase: \"Design\",\n      assignee: \"Solution Architect\"\n    },\n    {\n      title: \"UI/UX Design & Prototyping\",\n      description: \"Create user experience flows, wireframes, high-fidelity mockups, and interactive prototypes. Deliverables: Design system, wireframes, clickable prototype, design handoff.\",\n      priority: \"High\",\n      estimatedHours: 32,\n      phase: \"Design\",\n      assignee: \"UI/UX Designer\"\n    },\n    {\n      title: \"Backend API Development\",\n      description: \"Implement server-side logic, RESTful APIs, authentication system, and core business functionality. Deliverables: API endpoints, authentication system, data validation.\",\n      priority: \"High\",\n      estimatedHours: 48,\n      phase: \"Development\",\n      assignee: \"Backend Developer\"\n    },\n    {\n      title: \"Frontend Application Development\",\n      description: \"Build responsive user interface components, implement state management, and integrate with backend APIs. Deliverables: React/Vue components, responsive layouts, API integration.\",\n      priority: \"High\",\n      estimatedHours: 40,\n      phase: \"Development\",\n      assignee: \"Frontend Developer\"\n    },\n    {\n      title: \"Database Implementation & Optimization\",\n      description: \"Set up production database, create tables/collections, implement indexes, and optimize queries. Deliverables: Database setup, data models, performance optimization.\",\n      priority: \"Medium\",\n      estimatedHours: 18,\n      phase: \"Development\",\n      assignee: \"Database Developer\"\n    },\n    {\n      title: \"Third-party Service Integration\",\n      description: \"Integrate payment systems, external APIs, email services, and other third-party tools. Deliverables: Payment integration, API integrations, service configurations.\",\n      priority: \"Medium\",\n      estimatedHours: 26,\n      phase: \"Development\",\n      assignee: \"Full-stack Developer\"\n    },\n    {\n      title: \"Comprehensive Testing & QA\",\n      description: \"Implement unit tests, integration tests, end-to-end testing, and conduct thorough quality assurance. Deliverables: Test suites, QA reports, bug fixes.\",\n      priority: \"Medium\",\n      estimatedHours: 30,\n      phase: \"Testing\",\n      assignee: \"QA Engineer\"\n    },\n    {\n      title: \"DevOps & Production Deployment\",\n      description: \"Set up CI/CD pipeline, configure production environment, implement monitoring, and handle deployment. Deliverables: Deployment pipeline, monitoring setup, production deployment.\",\n      priority: \"Low\",\n      estimatedHours: 22,\n      phase: \"Deployment\",\n      assignee: \"DevOps Engineer\"\n    },\n    {\n      title: \"Documentation & Knowledge Transfer\",\n      description: \"Create technical documentation, user guides, API documentation, and conduct team knowledge transfer sessions. Deliverables: Technical docs, user manual, API docs.\",\n      priority: \"Low\",\n      estimatedHours: 16,\n      phase: \"Deployment\",\n      assignee: \"Technical Writer\"\n    }\n  ];\n}\n\n// Ensure exactly 10 tasks\ntasks = tasks.slice(0, 10);\nwhile (tasks.length < 10) {\n  const taskNum = tasks.length + 1;\n  tasks.push({\n    title: `Additional Task ${taskNum}`,\n    description: `Additional project task ${taskNum} to complete project requirements and ensure comprehensive coverage of all project aspects.`,\n    priority: \"Medium\",\n    estimatedHours: 12,\n    phase: \"Development\",\n    assignee: \"Team Member\"\n  });\n}\n\n// Calculate statistics\nconst totalHours = tasks.reduce((sum, task) => sum + task.estimatedHours, 0);\nconst priorityCounts = tasks.reduce((counts, task) => {\n  counts[task.priority] = (counts[task.priority] || 0) + 1;\n  return counts;\n}, {});\n\nreturn [{\n  json: {\n    success: true,\n    tasks: tasks,\n    projectDescription: projectDescription,\n    boardId: inputData.boardId,\n    groupId: inputData.groupId,\n    aiGenerated: aiSuccess,\n    fallbackUsed: !aiSuccess,\n    errorMessage: errorMessage,\n    statistics: {\n      totalTasks: tasks.length,\n      totalEstimatedHours: totalHours,\n      averageHoursPerTask: Math.round(totalHours / tasks.length),\n      priorityBreakdown: priorityCounts\n    },\n    timestamp: new Date().toISOString(),\n    version: \"v1.102.4-compatible\"\n  }\n}];"
+      },
+      "id": "parse-ai-response-001",
+      "name": "Parse AI Response with Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [960, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-webhook-001",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Project Input": {
+      "main": [
+        [
+          {
+            "node": "Validate Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input Data": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter - Generate Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter - Generate Tasks": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response with Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response with Fallback": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["ai-tasks", "openrouter", "v1102-compatible"],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-15T10:00:00.000Z",
+  "versionId": "1.0-ai-enhanced",
+  "credentialRequirements": {
+    "httpHeaderAuth": {
+      "name": "OpenRouter API Key",
+      "description": "HTTP Header Authentication for OpenRouter API",
+      "fields": {
+        "headerName": "Authorization",
+        "headerValue": "sk-or-v1-your-api-key-here"
+      }
+    }
+  },
+  "usage": {
+    "description": "This workflow generates AI-powered project tasks using OpenRouter's GPT-4o-mini model",
+    "endpoint": "POST /webhook/ai-tasks",
+    "payload": {
+      "projectDescription": "Build a modern e-commerce platform with React and Node.js",
+      "boardId": "123456789",
+      "groupId": "group123 (optional)"
+    },
+    "features": [
+      "AI task generation via OpenRouter API",
+      "Robust fallback system with predefined tasks",
+      "Input validation and error handling",
+      "Compatible with n8n v1.102.4",
+      "Generates exactly 10 realistic tasks",
+      "Includes task statistics and metadata"
+    ]
+  }
+}
