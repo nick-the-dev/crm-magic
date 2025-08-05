@@ -1,5 +1,5 @@
 {
-  "name": "Monday.com AI Tasks Generator - Enhanced",
+  "name": "Monday.com AI Tasks Generator - Official Nodes",
   "nodes": [
     {
       "parameters": {
@@ -126,37 +126,16 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.monday.com/v2",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "mondayComApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "API-Version",
-              "value": "2024-04"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": {
-          "query": "=mutation { create_group (board_id: {{ $json.boardId }}, group_name: \"{{ $json.groupName || $json.aiGroupName || 'Project Tasks' }}\") { id title } }"
-        },
-        "options": {
-          "timeout": 15000
-        }
+        "authentication": "accessToken",
+        "resource": "boardGroup",
+        "operation": "create",
+        "boardId": "={{ $json.boardId }}",
+        "name": "={{ $json.groupName || $json.aiGroupName || 'Project Tasks' }}"
       },
       "id": "create-group-001",
-      "name": "Monday - Create Group (GraphQL)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "name": "Monday - Create Group",
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
       "position": [1440, 480],
       "credentials": {
         "mondayComApi": {
@@ -168,7 +147,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get the original task data from Parse AI Tasks node\nconst parseTasksData = $('Parse AI Tasks').item.json;\nconsole.log('Original task data:', JSON.stringify(parseTasksData));\n\n// Get current data (might be group creation result)\nconst currentData = $json;\nconsole.log('Current data:', JSON.stringify(currentData));\n\n// Determine final group ID\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  // Use existing group ID\n  finalGroupId = parseTasksData.groupId;\n} else {\n  // Use newly created group ID from GraphQL response\n  if (currentData.data && currentData.data.create_group && currentData.data.create_group.id) {\n    finalGroupId = currentData.data.create_group.id;\n  } else {\n    finalGroupId = currentData.id || 'AI-Generated-Tasks';\n  }\n}\n\n// Get tasks from the original parse data\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found in original data',\n      parseTasksData: parseTasksData,\n      currentData: currentData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks into individual items\nconst outputs = [];\ntasks.forEach((task, index) => {\n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items');\nreturn outputs;"
+        "jsCode": "// Get the original task data from Parse AI Tasks node\nconst parseTasksData = $('Parse AI Tasks').item.json;\nconsole.log('Original task data:', JSON.stringify(parseTasksData));\n\n// Get current data (might be group creation result)\nconst currentData = $json;\nconsole.log('Current data:', JSON.stringify(currentData));\n\n// Determine final group ID\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  // Use existing group ID\n  finalGroupId = parseTasksData.groupId;\n} else {\n  // Use newly created group ID from Monday.com node response\n  if (currentData.id) {\n    finalGroupId = currentData.id;\n  } else {\n    finalGroupId = 'AI-Generated-Tasks';\n  }\n}\n\n// Get tasks from the original parse data\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found in original data',\n      parseTasksData: parseTasksData,\n      currentData: currentData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks into individual items\nconst outputs = [];\ntasks.forEach((task, index) => {\n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items');\nreturn outputs;"
       },
       "id": "split-001",
       "name": "Split Tasks",
@@ -179,113 +158,21 @@
     },
     {
       "parameters": {
-        "jsCode": "// Create Monday item and preserve task data\nconst taskData = $json;\nconsole.log('Creating item for task:', JSON.stringify(taskData.task));\n\n// We'll need to call Monday API manually to preserve the task data\n// Or use the Monday node and then combine the result\n\n// For now, pass through all the data we need\nreturn [{\n  json: {\n    ...taskData,\n    // Add any preprocessing here\n    readyForCreation: true\n  }\n}];"
-      },
-      "id": "prep-create-001",
-      "name": "Prep Create Item",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1920, 300],
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.monday.com/v2",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "mondayComApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "API-Version",
-              "value": "2024-04"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": {
-          "query": "=mutation { create_item (board_id: {{ $json.boardId }}, group_id: \"{{ $json.groupId }}\", item_name: \"{{ $json.task.title }}\") { id name column_values { id text value } } }"
-        },
-        "options": {
-          "timeout": 15000
+        "authentication": "accessToken",
+        "resource": "boardItem",
+        "operation": "create",
+        "boardId": "={{ $json.boardId }}",
+        "groupId": "={{ $json.groupId }}",
+        "name": "={{ $json.task.title }}",
+        "additionalFields": {
+          "columnValues": "={{ JSON.stringify({\n  text: $json.task.description ? $json.task.description.substring(0, 255) : '',\n  status: $json.task.priority || 'Medium',\n  numbers: $json.task.estimatedHours || 8\n}) }}"
         }
       },
       "id": "create-item-001",
-      "name": "Monday - Create Item (GraphQL)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2160, 300],
-      "credentials": {
-        "mondayComApi": {
-          "id": "monday-api",
-          "name": "Monday.com API"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Combine Monday.com GraphQL result with original task data\nconst mondayResult = $json; // This has the GraphQL response\nconst originalTaskData = $input.first().json; // This has the task info\n\nconsole.log('Monday GraphQL result:', JSON.stringify(mondayResult));\nconsole.log('Original task data:', JSON.stringify(originalTaskData));\n\n// Extract item ID from GraphQL response\nlet itemId = null;\nif (mondayResult.data && mondayResult.data.create_item && mondayResult.data.create_item.id) {\n  itemId = mondayResult.data.create_item.id;\n} else if (mondayResult.id) {\n  itemId = mondayResult.id;\n}\n\nreturn [{\n  json: {\n    // Monday.com response\n    itemId: itemId,\n    mondayItem: mondayResult.data ? mondayResult.data.create_item : mondayResult,\n    // Original task data\n    task: originalTaskData.task,\n    boardId: originalTaskData.boardId,\n    groupId: originalTaskData.groupId,\n    taskIndex: originalTaskData.taskIndex\n  }\n}];"
-      },
-      "id": "combine-data-001",
-      "name": "Combine Item Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [2400, 300],
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Now we have the combined data from Combine Item Data node\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\n\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\n\n// Create column values with proper Monday.com GraphQL format\nconst columnValues = {};\n\n// Add description to text column if available\nif (task.description) {\n  columnValues.text = task.description.substring(0, 255);\n  console.log('Added description');\n}\n\n// Add priority as status using index format (High=0, Medium=1, Low=2)\nif (task.priority) {\n  let statusIndex = 0; // Default to High\n  if (task.priority.toLowerCase() === 'medium') statusIndex = 1;\n  if (task.priority.toLowerCase() === 'low') statusIndex = 2;\n  \n  columnValues.status = {\n    index: statusIndex,\n    label: task.priority\n  };\n  console.log('Added priority:', task.priority);\n}\n\n// Add assignee - Note: This requires actual Monday.com user IDs\n// Email-based assignment would need additional lookup\nif (task.assignee && typeof task.assignee === 'string') {\n  // Store as text for now - would need user lookup for proper people column\n  columnValues.text_assignee = task.assignee;\n  console.log('Added assignee as text:', task.assignee);\n}\n\n// Add estimated hours as numbers column\nif (task.estimatedHours) {\n  columnValues.numbers = task.estimatedHours;\n  console.log('Added estimated hours:', task.estimatedHours);\n}\n\nconsole.log('Final column values:', JSON.stringify(columnValues));\n\nreturn [{\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task\n  }\n}];"
-      },
-      "id": "prepare-columns-001",
-      "name": "Prepare Column Values",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [2640, 300],
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.monday.com/v2",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "mondayComApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "API-Version",
-              "value": "2024-04"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": {
-          "query": "=mutation { change_multiple_column_values (board_id: {{ $json.boardId }}, item_id: {{ $json.itemId }}, column_values: \"{{ $json.columnValues }}\") { id name column_values { id text value } } }"
-        },
-        "options": {
-          "timeout": 15000
-        }
-      },
-      "id": "update-item-001",
-      "name": "Monday - Update Item (GraphQL)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2880, 300],
+      "name": "Monday - Create Item",
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [1920, 300],
       "credentials": {
         "mondayComApi": {
           "id": "monday-api",
@@ -306,17 +193,17 @@
       "name": "Merge Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [3120, 300]
+      "position": [2160, 300]
     },
     {
       "parameters": {
-        "jsCode": "const results = $input.all();\nconst summary = {\n  success: true,\n  message: 'Successfully created ' + results.length + ' tasks in Monday.com using GraphQL API!',\n  tasksCreated: results.length,\n  boardId: results[0] ? results[0].json.boardId : null,\n  apiVersion: '2024-04',\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
+        "jsCode": "const results = $input.all();\nconst summary = {\n  success: true,\n  message: 'Successfully created ' + results.length + ' tasks in Monday.com using official Monday.com node!',\n  tasksCreated: results.length,\n  boardId: results[0] ? results[0].json.boardId : null,\n  nodeType: 'official-monday-node',\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
       },
       "id": "summary-001",
       "name": "Create Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3360, 300],
+      "position": [2400, 300],
       "onError": "continueRegularOutput"
     },
     {
@@ -328,7 +215,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3600, 300],
+      "position": [2640, 300],
       "onError": "continueRegularOutput"
     }
   ],
@@ -388,14 +275,14 @@
         ],
         [
           {
-            "node": "Monday - Create Group (GraphQL)",
+            "node": "Monday - Create Group",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Monday - Create Group (GraphQL)": {
+    "Monday - Create Group": {
       "main": [
         [
           {
@@ -410,58 +297,14 @@
       "main": [
         [
           {
-            "node": "Prep Create Item",
+            "node": "Monday - Create Item",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prep Create Item": {
-      "main": [
-        [
-          {
-            "node": "Monday - Create Item (GraphQL)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Monday - Create Item (GraphQL)": {
-      "main": [
-        [
-          {
-            "node": "Combine Item Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Combine Item Data": {
-      "main": [
-        [
-          {
-            "node": "Prepare Column Values",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Column Values": {
-      "main": [
-        [
-          {
-            "node": "Monday - Update Item (GraphQL)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Monday - Update Item (GraphQL)": {
+    "Monday - Create Item": {
       "main": [
         [
           {
@@ -500,8 +343,8 @@
     "executionOrder": "v1"
   },
   "staticData": null,
-  "tags": ["monday.com", "ai-tasks", "graphql", "enhanced"],
+  "tags": ["monday.com", "ai-tasks", "official-nodes", "simplified"],
   "triggerCount": 1,
-  "updatedAt": "2025-08-05T03:08:00.000Z",
-  "versionId": "1.2-enhanced"
+  "updatedAt": "2025-08-05T03:35:00.000Z",
+  "versionId": "2.0-official-nodes"
 }
