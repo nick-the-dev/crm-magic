@@ -4,7 +4,7 @@ Generate 10 realistic project tasks with AI and automatically add them to your M
 
 ## 📁 Files
 
-- `monday-tasks-generator-fixed.json` - Enhanced n8n workflow with user assignment
+- `monday-tasks-generator-enhanced.json` - Enhanced n8n workflow with user assignment
 - `index.html` - Optional external form interface  
 - `README.md` - This file
 
@@ -12,12 +12,12 @@ Generate 10 realistic project tasks with AI and automatically add them to your M
 
 1. **Import Workflow**
    - Open n8n
-   - Import `monday-tasks-generator-fixed.json`
+   - Import `monday-tasks-generator-enhanced.json`
 
 2. **Configure Credentials**
-   - **OpenRouter API**: Create HTTP Header Auth credential
-     - Header: `Authorization`
-     - Value: `Bearer YOUR_OPENROUTER_API_KEY`
+   - **OpenRouter API**: Use the predefined "OpenRouter account" credential
+     - Go to n8n Credentials → OpenRouter account
+     - Add your OpenRouter API key
    - **Monday.com API**: Create Monday.com credential with your API token
      - Used for both task creation AND user lookup
 

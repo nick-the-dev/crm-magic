@@ -6,8 +6,7 @@
         "httpMethod": "POST",
         "path": "monday-tasks",
         "responseMode": "responseNode",
-        "options": {},
-        "onError": "continueRegularOutput"
+        "options": {}
       },
       "id": "webhook-001",
       "name": "Webhook - Project Input",
@@ -24,8 +23,7 @@
       "name": "Validate Input Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [480, 300],
-      "onError": "continueRegularOutput"
+      "position": [480, 300]
     },
     {
       "parameters": {
@@ -72,11 +70,10 @@
       "position": [720, 300],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "openrouter-api",
-          "name": "OpenRouter API Key"
+          "id": "OpenRouter account",
+          "name": "OpenRouter account"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -86,8 +83,7 @@
       "name": "Parse AI Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 300],
-      "onError": "continueRegularOutput"
+      "position": [960, 300]
     },
     {
       "parameters": {
@@ -134,8 +130,7 @@
           "id": "monday-api",
           "name": "Monday.com API"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -145,8 +140,7 @@
       "name": "Split Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1680, 300],
-      "onError": "continueRegularOutput"
+      "position": [1680, 300]
     },
     {
       "parameters": {
@@ -156,8 +150,7 @@
       "name": "Prep Create Item",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1920, 300],
-      "onError": "continueRegularOutput"
+      "position": [1920, 300]
     },
     {
       "parameters": {
@@ -177,30 +170,27 @@
           "id": "monday-api",
           "name": "Monday.com API"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Combine Monday.com result with original task data\nconst mondayResult = $json; // This has the item ID\nconst originalTaskData = $input.first().json; // This has the task info\n\nconsole.log('Monday result:', JSON.stringify(mondayResult));\nconsole.log('Original task data:', JSON.stringify(originalTaskData));\n\nreturn [{\n  json: {\n    // Monday.com response\n    itemId: mondayResult.id,\n    mondayItem: mondayResult,\n    // Original task data\n    task: originalTaskData.task,\n    boardId: originalTaskData.boardId,\n    groupId: originalTaskData.groupId,\n    taskIndex: originalTaskData.taskIndex\n  }\n}];"
+        "jsCode": "// Combine Monday.com result with original task data\nconst mondayResult = $json; // This has the item ID\nconst originalTaskData = $input.first().json; // This has the task info\n\nconsole.log('Monday result:', JSON.stringify(mondayResult));\nconsole.log('Original task data:', JSON.stringify(originalTaskData));\n\nreturn [{\n  json: {\n    // Monday.com response\n    itemId: mondayResult.id,\n    mondayItem: mondayResult,\n    // Original task data - ensure all fields are passed through\n    task: originalTaskData.task,\n    boardId: originalTaskData.boardId,\n    groupId: originalTaskData.groupId,\n    taskIndex: originalTaskData.taskIndex,\n    totalTasks: originalTaskData.totalTasks,\n    projectDescription: originalTaskData.projectDescription\n  }\n}];"
       },
       "id": "combine-data-001",
       "name": "Combine Item Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2400, 300],
-      "onError": "continueRegularOutput"
+      "position": [2400, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Lookup user ID from email if assignee is an email\nconst data = $json;\nconst task = data.task || {};\n\nconsole.log('Looking up user for task:', task.title);\nconsole.log('Assignee:', task.assignee);\n\n// Check if assignee is an email\nif (task.assignee && typeof task.assignee === 'string' && task.assignee.includes('@')) {\n  // Extract the email part (remove extra text if needed)\n  const emailMatch = task.assignee.match(/[\\w.-]+@[\\w.-]+\\.[\\w]+/);\n  const email = emailMatch ? emailMatch[0] : task.assignee;\n  \n  console.log('Email to lookup:', email);\n  \n  // Pass the email for lookup in the next node\n  return [{\n    json: {\n      ...data,\n      lookupEmail: email,\n      needsLookup: true\n    }\n  }];\n} else {\n  // No lookup needed, pass through\n  return [{\n    json: {\n      ...data,\n      needsLookup: false,\n      userId: null\n    }\n  }];\n}"
+        "jsCode": "// Lookup user ID from email if assignee is an email\nconst data = $json;\nconst task = data.task || {};\n\nconsole.log('=== USER LOOKUP PREP ===');\nconsole.log('Full data received:', JSON.stringify(data, null, 2));\nconsole.log('Task data:', JSON.stringify(task, null, 2));\nconsole.log('Task title:', task.title);\nconsole.log('Assignee value:', task.assignee);\nconsole.log('Assignee type:', typeof task.assignee);\n\n// Check if assignee is an email - more robust check\nif (task.assignee && typeof task.assignee === 'string') {\n  const assigneeStr = task.assignee.trim();\n  console.log('Trimmed assignee:', assigneeStr);\n  \n  // Enhanced email detection - check for @ symbol and basic email pattern\n  const emailPattern = /^[\\w.-]+@[\\w.-]+\\.[\\w]+$/;\n  const containsAt = assigneeStr.includes('@');\n  const isValidEmail = emailPattern.test(assigneeStr);\n  \n  console.log('Contains @:', containsAt);\n  console.log('Matches email pattern:', isValidEmail);\n  \n  if (containsAt && isValidEmail) {\n    console.log('✅ Email detected, setting up lookup for:', assigneeStr);\n    \n    return [{\n      json: {\n        ...data,\n        lookupEmail: assigneeStr,\n        needsLookup: true\n      }\n    }];\n  } else {\n    console.log('❌ Not a valid email format');\n  }\n} else {\n  console.log('❌ No assignee or not a string');\n}\n\n// No lookup needed, pass through\nconsole.log('🔄 No lookup needed, passing through');\nreturn [{\n  json: {\n    ...data,\n    needsLookup: false,\n    userId: null\n  }\n}];"
       },
       "id": "user-lookup-prep-001",
       "name": "User Lookup Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2490, 300],
-      "onError": "continueRegularOutput"
+      "position": [2490, 300]
     },
     {
       "parameters": {
@@ -266,8 +256,7 @@
           "id": "monday-api",
           "name": "Monday.com API"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -277,8 +266,7 @@
       "name": "Process User Lookup",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2865, 220],
-      "onError": "continueRegularOutput"
+      "position": [2865, 220]
     },
     {
       "parameters": {
@@ -302,8 +290,7 @@
       "name": "Prepare Column Values",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2640, 300],
-      "onError": "continueRegularOutput"
+      "position": [2640, 300]
     },
     {
       "parameters": {
@@ -323,8 +310,7 @@
           "id": "monday-api",
           "name": "Monday.com API"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -348,8 +334,7 @@
       "name": "Create Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3360, 300],
-      "onError": "continueRegularOutput"
+      "position": [3360, 300]
     },
     {
       "parameters": {
@@ -361,7 +346,6 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [3600, 300],
-      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
