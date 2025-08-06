@@ -29,8 +29,8 @@
       "parameters": {
         "method": "POST",
         "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -144,7 +144,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Create Monday item and preserve task data\nconst taskData = $json;\nconsole.log('Creating item for task:', JSON.stringify(taskData.task));\n\n// We'll need to call Monday API manually to preserve the task data\n// Or use the Monday node and then combine the result\n\n// For now, pass through all the data we need\nreturn [{\n  json: {\n    ...taskData,\n    // Add any preprocessing here\n    readyForCreation: true\n  }\n}];"
+        "jsCode": "// Create Monday item and preserve task data\nconst taskData = $json;\nconsole.log('Creating item for task:', JSON.stringify(taskData.task));\nconsole.log('Task index:', taskData.taskIndex, 'of', taskData.totalTasks);\n\n// Pass through all the data we need\nreturn [{\n  json: {\n    ...taskData,\n    // Add any preprocessing here\n    readyForCreation: true\n  }\n}];"
       },
       "id": "prep-create-001",
       "name": "Prep Create Item",
@@ -275,12 +275,14 @@
     },
     {
       "parameters": {
-        "mode": "combine",
+        "mode": "combine", 
         "combineBy": "combineByPosition",
-        "options": {}
+        "options": {
+          "includeUnpaired": true
+        }
       },
       "id": "merge-lookup-001",
-      "name": "Merge User Data",
+      "name": "Merge User Data", 
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [3376, 296]
