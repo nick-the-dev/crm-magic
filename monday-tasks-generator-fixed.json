@@ -1,5 +1,5 @@
 {
-  "name": "Monday.com AI Tasks Generator - Fixed",
+  "name": "Monday.com AI Tasks Generator - Enhanced",
   "nodes": [
     {
       "parameters": {
@@ -139,7 +139,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Get the original task data from Parse AI Tasks node\nconst parseTasksData = $('Parse AI Tasks').item.json;\nconsole.log('Original task data:', JSON.stringify(parseTasksData));\n\n// Get current data (might be group creation result)\nconst currentData = $json;\nconsole.log('Current data:', JSON.stringify(currentData));\n\n// Determine final group ID\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  // Use existing group ID\n  finalGroupId = parseTasksData.groupId;\n} else {\n  // Use newly created group ID\n  finalGroupId = currentData.id || 'AI-Generated-Tasks';\n}\n\n// Get tasks from the original parse data\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found in original data',\n      parseTasksData: parseTasksData,\n      currentData: currentData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks into individual items\nconst outputs = [];\ntasks.forEach((task, index) => {\n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items');\nreturn outputs;"
+        "jsCode": "// Get the original task data from Parse AI Tasks node\nconst parseTasksData = $('Parse AI Tasks').item.json;\nconsole.log('Original task data:', JSON.stringify(parseTasksData));\n\n// Get current data (might be group creation result)\nconst currentData = $json;\nconsole.log('Current data:', JSON.stringify(currentData));\n\n// Determine final group ID - prioritize \"To-Do\" group\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  // Use existing group ID from input\n  finalGroupId = parseTasksData.groupId;\n} else if (parseTasksData.groupName && parseTasksData.groupName.toLowerCase() === 'to-do') {\n  // Use the known \"To-Do\" group ID\n  finalGroupId = 'new_group29179';\n} else {\n  // Use newly created group ID or fall back to \"To-Do\" group\n  finalGroupId = currentData.id || 'new_group29179';\n}\n\nconsole.log('Using group ID:', finalGroupId);\n\n// Get tasks from the original parse data\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found in original data',\n      parseTasksData: parseTasksData,\n      currentData: currentData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks into individual items\nconst outputs = [];\ntasks.forEach((task, index) => {\n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items for group:', finalGroupId);\nreturn outputs;"
       },
       "id": "split-001",
       "name": "Split Tasks",
@@ -193,7 +193,110 @@
     },
     {
       "parameters": {
-        "jsCode": "// Now we have the combined data from Combine Item Data node\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\n\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\n\n// Create column values with proper Monday.com format\nconst columnValues = {};\n\n// Add description to text column if available\nif (task.description) {\n  columnValues.text = task.description.substring(0, 255);\n  console.log('Added description');\n}\n\n// Add priority as status using index format (High=0, Medium=1, Low=2)\nif (task.priority) {\n  let statusIndex = 0; // Default to High\n  if (task.priority.toLowerCase() === 'medium') statusIndex = 1;\n  if (task.priority.toLowerCase() === 'low') statusIndex = 2;\n  \n  columnValues.status = {\n    index: statusIndex,\n    label: task.priority\n  };\n  console.log('Added priority:', task.priority);\n}\n\n// Add assignee - Note: This requires actual Monday.com user IDs\n// Email-based assignment would need additional lookup\nif (task.assignee && typeof task.assignee === 'string') {\n  // Store as text for now - would need user lookup for proper people column\n  columnValues.text_assignee = task.assignee;\n  console.log('Added assignee as text:', task.assignee);\n}\n\nconsole.log('Final column values:', JSON.stringify(columnValues));\n\nreturn [{\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task\n  }\n}];"
+        "jsCode": "// Lookup user ID from email if assignee is an email\nconst data = $json;\nconst task = data.task || {};\n\nconsole.log('Looking up user for task:', task.title);\nconsole.log('Assignee:', task.assignee);\n\n// Check if assignee is an email\nif (task.assignee && typeof task.assignee === 'string' && task.assignee.includes('@')) {\n  // Extract the email part (remove extra text if needed)\n  const emailMatch = task.assignee.match(/[\\w.-]+@[\\w.-]+\\.[\\w]+/);\n  const email = emailMatch ? emailMatch[0] : task.assignee;\n  \n  console.log('Email to lookup:', email);\n  \n  // Pass the email for lookup in the next node\n  return [{\n    json: {\n      ...data,\n      lookupEmail: email,\n      needsLookup: true\n    }\n  }];\n} else {\n  // No lookup needed, pass through\n  return [{\n    json: {\n      ...data,\n      needsLookup: false,\n      userId: null\n    }\n  }];\n}"
+      },
+      "id": "user-lookup-prep-001",
+      "name": "User Lookup Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2490, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.needsLookup }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-lookup-001",
+      "name": "IF - Needs User Lookup",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2565, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.monday.com/v2",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $credentials.httpHeaderAuth.headerValue }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": {
+          "query": "query { users(emails: [\"={{ $json.lookupEmail }}\"]) { id name email } }"
+        }
+      },
+      "id": "monday-user-lookup-001",
+      "name": "Monday - User Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2715, 220],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "monday-api",
+          "name": "Monday.com API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process user lookup result\nconst lookupResult = $json;\nconst originalData = $input.first().json;\n\nconsole.log('User lookup result:', JSON.stringify(lookupResult));\n\nlet userId = null;\nif (lookupResult.data && lookupResult.data.users && lookupResult.data.users.length > 0) {\n  userId = parseInt(lookupResult.data.users[0].id);\n  console.log('Found user ID:', userId);\n} else {\n  console.log('User not found for email:', originalData.lookupEmail);\n}\n\nreturn [{\n  json: {\n    ...originalData,\n    userId: userId,\n    userFound: userId !== null\n  }\n}];"
+      },
+      "id": "process-user-lookup-001",
+      "name": "Process User Lookup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2865, 220],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "waitForAllItems": true
+        }
+      },
+      "id": "merge-lookup-001",
+      "name": "Merge User Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [2715, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Now we have the combined data with user lookup results\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\nconst userId = data.userId;\nconst userFound = data.userFound;\n\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\nconsole.log('User ID found:', userId);\n\n// Create column values with proper Monday.com format\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n  console.log('Added description to Notes');\n}\n\n// Add priority as status using proper format\nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  \n  const priorityKey = task.priority.toLowerCase();\n  const priorityValue = priorityMap[priorityKey] || priorityMap['medium'];\n  \n  columnValues.priority_1 = priorityValue;\n  console.log('Added priority:', priorityValue);\n}\n\n// Set owner based on user lookup result\nif (userId && userFound) {\n  columnValues.project_owner = {\n    personsAndTeams: [{ id: userId, kind: 'person' }]\n  };\n  console.log('Added owner with user ID:', userId);\n} else if (task.assignee && typeof task.assignee === 'string') {\n  // Store as text in Notes if user not found\n  columnValues.text9 = (columnValues.text9 || '') + ' (Assignee: ' + task.assignee + ')';\n  console.log('User not found, added assignee to notes:', task.assignee);\n}\n\n// Add estimated hours\nif (task.estimatedHours) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('Added estimated hours:', task.estimatedHours);\n}\n\nconsole.log('Final column values:', JSON.stringify(columnValues));\n\nreturn [{\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task\n  }\n}];"
       },
       "id": "prepare-columns-001",
       "name": "Prepare Column Values",
@@ -372,6 +475,68 @@
       "main": [
         [
           {
+            "node": "User Lookup Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Lookup Prep": {
+      "main": [
+        [
+          {
+            "node": "IF - Needs User Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Needs User Lookup": {
+      "main": [
+        [
+          {
+            "node": "Monday - User Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge User Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Monday - User Lookup": {
+      "main": [
+        [
+          {
+            "node": "Process User Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process User Lookup": {
+      "main": [
+        [
+          {
+            "node": "Merge User Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge User Data": {
+      "main": [
+        [
+          {
             "node": "Prepare Column Values",
             "type": "main",
             "index": 0
@@ -429,8 +594,8 @@
     "executionOrder": "v1"
   },
   "staticData": null,
-  "tags": ["monday.com", "ai-tasks", "validated"],
+  "tags": ["monday.com", "ai-tasks", "user-assignment", "email-lookup"],
   "triggerCount": 1,
   "updatedAt": "2025-08-04T10:00:00.000Z",
-  "versionId": "1.1-fixed"
+  "versionId": "2.0-enhanced"
 }
