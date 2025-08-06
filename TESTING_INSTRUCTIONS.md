@@ -94,7 +94,63 @@ curl -X POST https://your-n8n-instance.com/webhook/monday-tasks \
 **Fix**: Verify user exists, check GraphQL response structure
 **Fallback**: User info stored in Notes column if lookup fails
 
-### 5. Code Debug Loop Process
+### 5. n8n API Validation Error Handling
+
+#### Critical Error: "Invalid request: request/body must have required property 'settings'"
+
+**Root Cause**: n8n API requires the `settings` property when updating workflows through MCP tools
+
+**Fix**: Always include the settings parameter in n8n API calls:
+
+```javascript
+// When using n8n MCP tools for workflow updates:
+mcp__n8n-mcp__n8n_update_full_workflow({
+  id: "6IDxhXNS4X028T1O",
+  nodes: [...],
+  connections: {...},
+  settings: {
+    "executionOrder": "v1"
+  }
+})
+```
+
+**Complete MCP Update Example:**
+```javascript
+// Proper workflow update with all required fields
+const workflowUpdate = {
+  id: "6IDxhXNS4X028T1O",
+  name: "Monday.com AI Tasks Generator - Enhanced",
+  nodes: updatedNodesArray,
+  connections: connectionsObject,
+  settings: {
+    executionOrder: "v1"
+  }
+};
+
+// Execute update
+mcp__n8n-mcp__n8n_update_full_workflow(workflowUpdate);
+```
+
+**Alternative: Use Partial Updates for Minor Changes**
+```javascript
+// For small fixes, use partial updates instead
+mcp__n8n-mcp__n8n_update_partial_workflow({
+  id: "6IDxhXNS4X028T1O",
+  operations: [
+    {
+      type: "updateNode",
+      nodeId: "parse-001",
+      updates: {
+        parameters: {
+          jsCode: "// Updated code here"
+        }
+      }
+    }
+  ]
+});
+```
+
+### 6. Code Debug Loop Process
 
 #### Systematic Debugging Approach:
 
@@ -128,7 +184,92 @@ console.log('Available functions:', Object.keys($));
 console.log('All inputs:', $input.all().length);
 ```
 
-### 6. Success Criteria
+### 7. n8n MCP Tools Reference
+
+#### Essential Commands for Workflow Management:
+
+**List Workflows:**
+```javascript
+mcp__n8n-mcp__n8n_list_workflows({ limit: 50 })
+```
+
+**Get Workflow Details:**
+```javascript
+mcp__n8n-mcp__n8n_get_workflow_details({ id: "6IDxhXNS4X028T1O" })
+```
+
+**Validate Workflow:**
+```javascript
+mcp__n8n-mcp__n8n_validate_workflow({
+  id: "6IDxhXNS4X028T1O",
+  options: {
+    validateNodes: true,
+    validateConnections: true,
+    validateExpressions: true,
+    profile: "runtime"
+  }
+})
+```
+
+**Trigger Webhook Test:**
+```javascript
+mcp__n8n-mcp__n8n_trigger_webhook_workflow({
+  webhookUrl: "https://your-n8n-instance.com/webhook/monday-tasks",
+  httpMethod: "POST",
+  data: {
+    projectDescription: "Build a recipe recommendation system",
+    boardId: "9744010967",
+    assigneeEmails: "gluknik+1@gmail.com"
+  },
+  waitForResponse: true
+})
+```
+
+**Check Execution Results:**
+```javascript
+// List recent executions
+mcp__n8n-mcp__n8n_list_executions({
+  workflowId: "6IDxhXNS4X028T1O",
+  limit: 10,
+  includeData: true
+})
+
+// Get specific execution details
+mcp__n8n-mcp__n8n_get_execution({
+  id: "execution-id-here",
+  includeData: true
+})
+```
+
+#### Workflow Update Best Practices:
+
+1. **Always Validate First:**
+   ```javascript
+   // Before making changes, validate current state
+   mcp__n8n-mcp__n8n_validate_workflow({ id: "6IDxhXNS4X028T1O" })
+   ```
+
+2. **Use Partial Updates for Small Changes:**
+   - Faster execution
+   - Less prone to validation errors
+   - Better for iterative debugging
+
+3. **Include Required Settings:**
+   - Always add `"settings": {"executionOrder": "v1"}`
+   - Prevents "required property 'settings'" error
+
+4. **Test After Each Change:**
+   ```javascript
+   // Immediate test after update
+   mcp__n8n-mcp__n8n_trigger_webhook_workflow({
+     webhookUrl: "https://your-n8n-instance.com/webhook/monday-tasks",
+     httpMethod: "POST",
+     data: testPayload,
+     waitForResponse: true
+   })
+   ```
+
+### 8. Success Criteria
 
 **Complete Success Indicators:**
 - ✅ Webhook receives POST request successfully
@@ -149,7 +290,7 @@ console.log('All inputs:', $input.all().length);
 }
 ```
 
-### 7. Workflow Architecture Notes
+### 9. Workflow Architecture Notes
 
 **Critical Flow Path:**
 ```
@@ -171,7 +312,7 @@ Monday Update Item → Create Summary → Response
 - `project_owner` (Owner): User ID from email lookup
 - `numbers` (Hours): Estimated hours from AI
 
-### 8. Testing Variations
+### 10. Testing Variations
 
 **Different Project Types to Test:**
 1. Web application development
@@ -187,4 +328,101 @@ Monday Update Item → Create Summary → Response
 - Board permissions issues
 - Network connectivity problems
 
-This methodology ensures consistent, reliable testing and debugging of the Monday.com AI Tasks Generator workflow.
+### 11. Complete E2E Testing Script
+
+**Full Test Sequence Using n8n MCP Tools:**
+
+```javascript
+// 1. Verify workflow status
+const workflow = await mcp__n8n-mcp__n8n_get_workflow_details({ id: "6IDxhXNS4X028T1O" });
+console.log('Workflow active:', workflow.active);
+
+// 2. Validate workflow integrity
+const validation = await mcp__n8n-mcp__n8n_validate_workflow({ id: "6IDxhXNS4X028T1O" });
+if (validation.errors.length > 0) {
+  console.error('Validation errors:', validation.errors);
+  return;
+}
+
+// 3. Execute test
+const testPayload = {
+  projectDescription: "Build a recipe recommendation system that suggests meals based on dietary preferences and available ingredients",
+  boardId: "9744010967",
+  assigneeEmails: "gluknik+1@gmail.com"
+};
+
+const result = await mcp__n8n-mcp__n8n_trigger_webhook_workflow({
+  webhookUrl: "https://your-n8n-instance.com/webhook/monday-tasks",
+  httpMethod: "POST",
+  data: testPayload,
+  waitForResponse: true
+});
+
+// 4. Verify success
+if (result.success && result.tasksCreated === 10) {
+  console.log('✅ SUCCESS: All 10 tasks created!');
+  console.log('Board ID:', result.boardId);
+  console.log('Timestamp:', result.timestamp);
+} else {
+  console.error('❌ FAILURE:', result);
+  
+  // 5. Debug failed execution
+  const executions = await mcp__n8n-mcp__n8n_list_executions({
+    workflowId: "6IDxhXNS4X028T1O",
+    limit: 1,
+    includeData: true
+  });
+  
+  console.log('Last execution details:', executions.data[0]);
+}
+```
+
+### 12. Emergency Fixes Reference
+
+**Quick Fix Commands for Common Issues:**
+
+```javascript
+// Fix 1: Update Parse AI Tasks node (remove fallback)
+mcp__n8n-mcp__n8n_update_partial_workflow({
+  id: "6IDxhXNS4X028T1O",
+  operations: [{
+    type: "updateNode",
+    nodeId: "parse-001",
+    updates: {
+      parameters: {
+        jsCode: `// AI-only parsing code here`
+      }
+    }
+  }]
+});
+
+// Fix 2: Update node execution mode
+mcp__n8n-mcp__n8n_update_partial_workflow({
+  id: "6IDxhXNS4X028T1O",
+  operations: [{
+    type: "updateNode",
+    nodeId: "prep-create-001",
+    updates: {
+      parameters: {
+        mode: "runOnceForEachItem"
+      }
+    }
+  }]
+});
+
+// Fix 3: Update JavaScript compatibility
+mcp__n8n-mcp__n8n_update_partial_workflow({
+  id: "6IDxhXNS4X028T1O",
+  operations: [{
+    type: "updateNode",
+    nodeId: "combine-data-001",
+    updates: {
+      parameters: {
+        jsCode: `// Replace $input.first() with $input.item.json`
+      }
+    }
+  }]
+});
+```
+
+This comprehensive methodology ensures consistent, reliable testing and debugging of the Monday.com AI Tasks Generator workflow with full n8n MCP integration and proper API validation error handling.
