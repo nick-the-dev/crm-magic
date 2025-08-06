@@ -12,18 +12,18 @@
       "name": "Webhook - Project Input",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 300],
+      "position": [240, 296],
       "webhookId": "monday-tasks-webhook"
     },
     {
       "parameters": {
-        "jsCode": "// Process form data from webhook\nconst body = $json.body || $json;\nconst projectDescription = body.projectDescription || body['Project Description'] || '';\nconst boardId = body.boardId || body['Monday Board ID'] || '';\nconst groupId = body.groupId || body['Group ID (Optional)'] || null;\nconst groupName = body.groupName || body['Group Name (Optional)'] || null;\nconst assigneeEmails = body.assigneeEmails || null;\n\n// Validation\nif (!projectDescription || projectDescription.length < 10) {\n  return [{\n    json: {\n      success: false,\n      error: 'Project description must be at least 10 characters long',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nif (!boardId || !/^\\d+$/.test(boardId)) {\n  return [{\n    json: {\n      success: false,\n      error: 'Board ID must be numbers only',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    projectDescription: projectDescription.trim(),\n    boardId: boardId.trim(),\n    groupId: groupId ? groupId.trim() : null,\n    groupName: groupName ? groupName.trim() : null,\n    assigneeEmails: assigneeEmails ? assigneeEmails.trim().split(',').map(email => email.trim()).filter(email => email) : [],\n    timestamp: new Date().toISOString()\n  }\n}];"
+        "jsCode": "// Process form data from webhook\nconst body = $json.body || $json;\nconst projectDescription = body.projectDescription || body['Project Description'] || '';\nconst boardId = body.boardId || body['Monday Board ID'] || '';\nconst groupId = body.groupId || body['Group ID (Optional)'] || null;\nconst groupName = body.groupName || body['Group Name (Optional)'] || null;\nconst assigneeEmails = body.assigneeEmails || null;\n\n// Validation\nif (!projectDescription || projectDescription.length < 10) {\n  return [{\n    json: {\n      success: false,\n      error: 'Project description must be at least 10 characters long',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nif (!boardId || !/^\\\\d+$/.test(boardId)) {\n  return [{\n    json: {\n      success: false,\n      error: 'Board ID must be numbers only',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    projectDescription: projectDescription.trim(),\n    boardId: boardId.trim(),\n    groupId: groupId ? groupId.trim() : null,\n    groupName: groupName ? groupName.trim() : null,\n    assigneeEmails: assigneeEmails ? assigneeEmails.trim().split(',').map(email => email.trim()).filter(email => email) : [],\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
       "id": "validate-001",
       "name": "Validate Input Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [480, 300]
+      "position": [464, 296]
     },
     {
       "parameters": {
@@ -45,7 +45,6 @@
           ]
         },
         "sendBody": true,
-        "contentType": "json",
         "specifyBody": "json",
         "jsonBody": {
           "model": "openai/gpt-4o-mini",
@@ -56,18 +55,19 @@
             },
             {
               "role": "user",
-              "content": "=Break down this project into 10 manageable tasks: {{ $json.projectDescription }}. Also create a short 2-3 word group name. Make them sound natural and realistic. Return JSON: {\"groupName\":\"Short Project Name\", \"tasks\":[{\"title\":\"Clear task name\",\"description\":\"What needs to be done and why\",\"priority\":\"High/Medium/Low\",\"estimatedHours\":8,\"phase\":\"Planning/Design/Development/Testing/Launch\",\"assignee\":\"Team role\"}]}"
+              "content": "=Break down this project into 10 manageable tasks: {{ $json.projectDescription }}. Also create a short 2-3 word group name. Make them sound natural and realistic. Return JSON: {\\\"groupName\\\":\\\"Short Project Name\\\", \\\"tasks\\\":[{\\\"title\\\":\\\"Clear task name\\\",\\\"description\\\":\\\"What needs to be done and why\\\",\\\"priority\\\":\\\"High/Medium/Low\\\",\\\"estimatedHours\\\":8,\\\"phase\\\":\\\"Planning/Design/Development/Testing/Launch\\\",\\\"assignee\\\":\\\"Team role\\\"}]}"
             }
           ],
           "temperature": 0.7,
           "max_tokens": 2000
-        }
+        },
+        "options": {}
       },
       "id": "ai-generate-001",
       "name": "AI - Generate Tasks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [720, 300],
+      "position": [688, 296],
       "credentials": {
         "httpHeaderAuth": {
           "id": "OpenRouter account",
@@ -77,13 +77,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse AI response with fallback\nlet tasks = [];\nlet aiUsed = false;\nlet aiGroupName = null;\n\ntry {\n  const aiResponse = $json.choices[0].message.content;\n  const jsonMatch = aiResponse.match(/\\{.*\\}/s);\n  if (jsonMatch) {\n    const aiData = JSON.parse(jsonMatch[0]);\n    if (aiData.tasks && Array.isArray(aiData.tasks)) {\n      tasks = aiData.tasks;\n      aiGroupName = aiData.groupName || null;\n      aiUsed = true;\n    }\n  }\n} catch (error) {\n  console.log('AI failed, using fallback');\n}\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  const projectDesc = $('Validate Input Data').item.json.projectDescription;\n  aiGroupName = projectDesc.split(' ').slice(0, 2).join(' '); // Use first 2 words as fallback\n  tasks = [\n    {\"title\":\"Project Planning\",\"description\":\"Plan project: \" + projectDesc.substring(0,50) + \"...\",\"priority\":\"High\",\"estimatedHours\":16,\"phase\":\"Planning\",\"assignee\":\"Project Manager\"},\n    {\"title\":\"System Architecture\",\"description\":\"Design system architecture\",\"priority\":\"High\",\"estimatedHours\":20,\"phase\":\"Design\",\"assignee\":\"Solution Architect\"},\n    {\"title\":\"UI/UX Design\",\"description\":\"Create user interface designs\",\"priority\":\"High\",\"estimatedHours\":24,\"phase\":\"Design\",\"assignee\":\"UI/UX Designer\"},\n    {\"title\":\"Backend Development\",\"description\":\"Implement backend services\",\"priority\":\"High\",\"estimatedHours\":40,\"phase\":\"Development\",\"assignee\":\"Backend Developer\"},\n    {\"title\":\"Frontend Development\",\"description\":\"Build user interface\",\"priority\":\"High\",\"estimatedHours\":32,\"phase\":\"Development\",\"assignee\":\"Frontend Developer\"},\n    {\"title\":\"Database Setup\",\"description\":\"Configure database\",\"priority\":\"Medium\",\"estimatedHours\":16,\"phase\":\"Development\",\"assignee\":\"Database Admin\"},\n    {\"title\":\"API Integration\",\"description\":\"Connect external APIs\",\"priority\":\"Medium\",\"estimatedHours\":20,\"phase\":\"Development\",\"assignee\":\"Full-stack Developer\"},\n    {\"title\":\"Testing & QA\",\"description\":\"Test all functionality\",\"priority\":\"Medium\",\"estimatedHours\":24,\"phase\":\"Testing\",\"assignee\":\"QA Engineer\"},\n    {\"title\":\"Deployment\",\"description\":\"Deploy to production\",\"priority\":\"Low\",\"estimatedHours\":12,\"phase\":\"Deployment\",\"assignee\":\"DevOps Engineer\"},\n    {\"title\":\"Documentation\",\"description\":\"Create documentation\",\"priority\":\"Low\",\"estimatedHours\":8,\"phase\":\"Deployment\",\"assignee\":\"Technical Writer\"}\n  ];\n}\n\ntasks = tasks.slice(0, 10);\nconst validatedData = $('Validate Input Data').item.json;\n\n// If we have assignee emails, randomly assign them to tasks\nif (validatedData.assigneeEmails && validatedData.assigneeEmails.length > 0) {\n  tasks = tasks.map((task, index) => {\n    const assigneeIndex = index % validatedData.assigneeEmails.length;\n    return {\n      ...task,\n      assignee: validatedData.assigneeEmails[assigneeIndex]\n    };\n  });\n}\n\nreturn [{\n  json: {\n    tasks: tasks,\n    projectDescription: validatedData.projectDescription,\n    boardId: validatedData.boardId,\n    groupId: validatedData.groupId,\n    groupName: validatedData.groupName,\n    aiGroupName: aiGroupName,\n    assigneeEmails: validatedData.assigneeEmails,\n    aiUsed: aiUsed,\n    tasksCount: tasks.length\n  }\n}];"
+        "jsCode": "// Parse AI response with fallback\nlet tasks = [];\nlet aiUsed = false;\nlet aiGroupName = null;\n\ntry {\n  const aiResponse = $json.choices[0].message.content;\n  const jsonMatch = aiResponse.match(/\\\\{.*\\\\}/s);\n  if (jsonMatch) {\n    const aiData = JSON.parse(jsonMatch[0]);\n    if (aiData.tasks && Array.isArray(aiData.tasks)) {\n      tasks = aiData.tasks;\n      aiGroupName = aiData.groupName || null;\n      aiUsed = true;\n    }\n  }\n} catch (error) {\n  console.log('AI failed, using fallback');\n}\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  const projectDesc = $('Validate Input Data').item.json.projectDescription;\n  aiGroupName = projectDesc.split(' ').slice(0, 2).join(' '); // Use first 2 words as fallback\n  tasks = [\n    {\\\"title\\\":\\\"Project Planning\\\",\\\"description\\\":\\\"Plan project: \\\" + projectDesc.substring(0,50) + \\\"...\\\",\\\"priority\\\":\\\"High\\\",\\\"estimatedHours\\\":16,\\\"phase\\\":\\\"Planning\\\",\\\"assignee\\\":\\\"Project Manager\\\"},\n    {\\\"title\\\":\\\"System Architecture\\\",\\\"description\\\":\\\"Design system architecture\\\",\\\"priority\\\":\\\"High\\\",\\\"estimatedHours\\\":20,\\\"phase\\\":\\\"Design\\\",\\\"assignee\\\":\\\"Solution Architect\\\"},\n    {\\\"title\\\":\\\"UI/UX Design\\\",\\\"description\\\":\\\"Create user interface designs\\\",\\\"priority\\\":\\\"High\\\",\\\"estimatedHours\\\":24,\\\"phase\\\":\\\"Design\\\",\\\"assignee\\\":\\\"UI/UX Designer\\\"},\n    {\\\"title\\\":\\\"Backend Development\\\",\\\"description\\\":\\\"Implement backend services\\\",\\\"priority\\\":\\\"High\\\",\\\"estimatedHours\\\":40,\\\"phase\\\":\\\"Development\\\",\\\"assignee\\\":\\\"Backend Developer\\\"},\n    {\\\"title\\\":\\\"Frontend Development\\\",\\\"description\\\":\\\"Build user interface\\\",\\\"priority\\\":\\\"High\\\",\\\"estimatedHours\\\":32,\\\"phase\\\":\\\"Development\\\",\\\"assignee\\\":\\\"Frontend Developer\\\"},\n    {\\\"title\\\":\\\"Database Setup\\\",\\\"description\\\":\\\"Configure database\\\",\\\"priority\\\":\\\"Medium\\\",\\\"estimatedHours\\\":16,\\\"phase\\\":\\\"Development\\\",\\\"assignee\\\":\\\"Database Admin\\\"},\n    {\\\"title\\\":\\\"API Integration\\\",\\\"description\\\":\\\"Connect external APIs\\\",\\\"priority\\\":\\\"Medium\\\",\\\"estimatedHours\\\":20,\\\"phase\\\":\\\"Development\\\",\\\"assignee\\\":\\\"Full-stack Developer\\\"},\n    {\\\"title\\\":\\\"Testing & QA\\\",\\\"description\\\":\\\"Test all functionality\\\",\\\"priority\\\":\\\"Medium\\\",\\\"estimatedHours\\\":24,\\\"phase\\\":\\\"Testing\\\",\\\"assignee\\\":\\\"QA Engineer\\\"},\n    {\\\"title\\\":\\\"Deployment\\\",\\\"description\\\":\\\"Deploy to production\\\",\\\"priority\\\":\\\"Low\\\",\\\"estimatedHours\\\":12,\\\"phase\\\":\\\"Deployment\\\",\\\"assignee\\\":\\\"DevOps Engineer\\\"},\n    {\\\"title\\\":\\\"Documentation\\\",\\\"description\\\":\\\"Create documentation\\\",\\\"priority\\\":\\\"Low\\\",\\\"estimatedHours\\\":8,\\\"phase\\\":\\\"Deployment\\\",\\\"assignee\\\":\\\"Technical Writer\\\"}\n  ];\n}\n\ntasks = tasks.slice(0, 10);\nconst validatedData = $('Validate Input Data').item.json;\n\n// If we have assignee emails, randomly assign them to tasks\nif (validatedData.assigneeEmails && validatedData.assigneeEmails.length > 0) {\n  tasks = tasks.map((task, index) => {\n    const assigneeIndex = index % validatedData.assigneeEmails.length;\n    return {\n      ...task,\n      assignee: validatedData.assigneeEmails[assigneeIndex]\n    };\n  });\n}\n\nreturn [{\n  json: {\n    tasks: tasks,\n    projectDescription: validatedData.projectDescription,\n    boardId: validatedData.boardId,\n    groupId: validatedData.groupId,\n    groupName: validatedData.groupName,\n    aiGroupName: aiGroupName,\n    assigneeEmails: validatedData.assigneeEmails,\n    aiUsed: aiUsed,\n    tasksCount: tasks.length\n  }\n}];"
       },
       "id": "parse-001",
       "name": "Parse AI Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 300]
+      "position": [912, 296]
     },
     {
       "parameters": {
@@ -105,18 +105,18 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "if-001",
       "name": "IF - Group Exists",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1200, 300]
+      "position": [1136, 296]
     },
     {
       "parameters": {
         "resource": "boardGroup",
-        "operation": "create",
         "boardId": "={{ $json.boardId }}",
         "name": "={{ $json.groupName || $json.aiGroupName || 'Project Tasks' }}"
       },
@@ -124,23 +124,23 @@
       "name": "Monday - Create Group",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [1440, 480],
+      "position": [1360, 368],
       "credentials": {
         "mondayComApi": {
-          "id": "monday-api",
-          "name": "Monday.com API"
+          "id": "81ZKNPfmUGTEOCKI",
+          "name": "Monday.com account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Get the original task data from Parse AI Tasks node\nconst parseTasksData = $('Parse AI Tasks').item.json;\nconsole.log('Original task data:', JSON.stringify(parseTasksData));\n\n// Get current data (might be group creation result)\nconst currentData = $json;\nconsole.log('Current data:', JSON.stringify(currentData));\n\n// Determine final group ID - prioritize \"To-Do\" group\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  // Use existing group ID from input\n  finalGroupId = parseTasksData.groupId;\n} else if (parseTasksData.groupName && parseTasksData.groupName.toLowerCase() === 'to-do') {\n  // Use the known \"To-Do\" group ID\n  finalGroupId = 'new_group29179';\n} else {\n  // Use newly created group ID or fall back to \"To-Do\" group\n  finalGroupId = currentData.id || 'new_group29179';\n}\n\nconsole.log('Using group ID:', finalGroupId);\n\n// Get tasks from the original parse data\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found in original data',\n      parseTasksData: parseTasksData,\n      currentData: currentData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks into individual items\nconst outputs = [];\ntasks.forEach((task, index) => {\n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items for group:', finalGroupId);\nreturn outputs;"
+        "jsCode": "// Get the original task data from Parse AI Tasks node\nconst parseTasksData = $('Parse AI Tasks').item.json;\nconsole.log('Original task data:', JSON.stringify(parseTasksData));\n\n// Get current data (might be group creation result)\nconst currentData = $json;\nconsole.log('Current data:', JSON.stringify(currentData));\n\n// Determine final group ID - prioritize \\\"To-Do\\\" group\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  // Use existing group ID from input\n  finalGroupId = parseTasksData.groupId;\n} else if (parseTasksData.groupName && parseTasksData.groupName.toLowerCase() === 'to-do') {\n  // Use the known \\\"To-Do\\\" group ID\n  finalGroupId = 'new_group29179';\n} else {\n  // Use newly created group ID or fall back to \\\"To-Do\\\" group\n  finalGroupId = currentData.id || 'new_group29179';\n}\n\nconsole.log('Using group ID:', finalGroupId);\n\n// Get tasks from the original parse data\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found in original data',\n      parseTasksData: parseTasksData,\n      currentData: currentData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks into individual items\nconst outputs = [];\ntasks.forEach((task, index) => {\n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items for group:', finalGroupId);\nreturn outputs;"
       },
       "id": "split-001",
       "name": "Split Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1680, 300]
+      "position": [1584, 296]
     },
     {
       "parameters": {
@@ -150,25 +150,25 @@
       "name": "Prep Create Item",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1920, 300]
+      "position": [1808, 296]
     },
     {
       "parameters": {
         "resource": "boardItem",
-        "operation": "create",
         "boardId": "={{ $json.boardId }}",
         "groupId": "={{ $json.groupId }}",
-        "name": "={{ $json.task.title }}"
+        "name": "={{ $json.task.title }}",
+        "additionalFields": {}
       },
       "id": "create-item-001",
       "name": "Monday - Create Item",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [2160, 300],
+      "position": [2032, 296],
       "credentials": {
         "mondayComApi": {
-          "id": "monday-api",
-          "name": "Monday.com API"
+          "id": "81ZKNPfmUGTEOCKI",
+          "name": "Monday.com account"
         }
       }
     },
@@ -180,17 +180,17 @@
       "name": "Combine Item Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2400, 300]
+      "position": [2256, 296]
     },
     {
       "parameters": {
-        "jsCode": "// Lookup user ID from email if assignee is an email\nconst data = $json;\nconst task = data.task || {};\n\nconsole.log('=== USER LOOKUP PREP ===');\nconsole.log('Full data received:', JSON.stringify(data, null, 2));\nconsole.log('Task data:', JSON.stringify(task, null, 2));\nconsole.log('Task title:', task.title);\nconsole.log('Assignee value:', task.assignee);\nconsole.log('Assignee type:', typeof task.assignee);\n\n// Check if assignee is an email - more robust check\nif (task.assignee && typeof task.assignee === 'string') {\n  const assigneeStr = task.assignee.trim();\n  console.log('Trimmed assignee:', assigneeStr);\n  \n  // Enhanced email detection - check for @ symbol and basic email pattern\n  const emailPattern = /^[\\w.-]+@[\\w.-]+\\.[\\w]+$/;\n  const containsAt = assigneeStr.includes('@');\n  const isValidEmail = emailPattern.test(assigneeStr);\n  \n  console.log('Contains @:', containsAt);\n  console.log('Matches email pattern:', isValidEmail);\n  \n  if (containsAt && isValidEmail) {\n    console.log('✅ Email detected, setting up lookup for:', assigneeStr);\n    \n    return [{\n      json: {\n        ...data,\n        lookupEmail: assigneeStr,\n        needsLookup: true\n      }\n    }];\n  } else {\n    console.log('❌ Not a valid email format');\n  }\n} else {\n  console.log('❌ No assignee or not a string');\n}\n\n// No lookup needed, pass through\nconsole.log('🔄 No lookup needed, passing through');\nreturn [{\n  json: {\n    ...data,\n    needsLookup: false,\n    userId: null\n  }\n}];"
+        "jsCode": "// Lookup user ID from email if assignee is an email\nconst data = $json;\nconst task = data.task || {};\n\nconsole.log('=== USER LOOKUP PREP ===');\nconsole.log('Full data received:', JSON.stringify(data, null, 2));\nconsole.log('Task data:', JSON.stringify(task, null, 2));\nconsole.log('Task title:', task.title);\nconsole.log('Assignee value:', task.assignee);\nconsole.log('Assignee type:', typeof task.assignee);\n\n// Check if assignee is an email - more robust check\nif (task.assignee && typeof task.assignee === 'string') {\n  const assigneeStr = task.assignee.trim();\n  console.log('Trimmed assignee:', assigneeStr);\n  \n  // Enhanced email detection - check for @ symbol and basic email pattern\n  const emailPattern = /^[\\\\w.-]+@[\\\\w.-]+\\\\.[\\\\w]+$/;\n  const containsAt = assigneeStr.includes('@');\n  const isValidEmail = emailPattern.test(assigneeStr);\n  \n  console.log('Contains @:', containsAt);\n  console.log('Matches email pattern:', isValidEmail);\n  \n  if (containsAt && isValidEmail) {\n    console.log('✅ Email detected, setting up lookup for:', assigneeStr);\n    \n    return [{\n      json: {\n        ...data,\n        lookupEmail: assigneeStr,\n        needsLookup: true\n      }\n    }];\n  } else {\n    console.log('❌ Not a valid email format');\n  }\n} else {\n  console.log('❌ No assignee or not a string');\n}\n\n// No lookup needed, pass through\nconsole.log('🔄 No lookup needed, passing through');\nreturn [{\n  json: {\n    ...data,\n    needsLookup: false,\n    userId: null\n  }\n}];"
       },
       "id": "user-lookup-prep-001",
       "name": "User Lookup Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2490, 300]
+      "position": [2480, 296]
     },
     {
       "parameters": {
@@ -212,20 +212,21 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "if-lookup-001",
       "name": "IF - Needs User Lookup",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2565, 300]
+      "position": [2704, 296]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.monday.com/v2",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mondayComApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -240,21 +241,25 @@
           ]
         },
         "sendBody": true,
-        "contentType": "json",
         "specifyBody": "json",
         "jsonBody": {
-          "query": "query { users(emails: [\"={{ $json.lookupEmail }}\"]) { id name email } }"
-        }
+          "query": "query { users(emails: [\\\"={{ $json.lookupEmail }}\\\"]) { id name email } }"
+        },
+        "options": {}
       },
       "id": "monday-user-lookup-001",
       "name": "Monday - User Lookup",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2715, 220],
+      "position": [2928, 224],
       "credentials": {
         "httpHeaderAuth": {
           "id": "monday-api",
           "name": "Monday.com API"
+        },
+        "mondayComApi": {
+          "id": "81ZKNPfmUGTEOCKI",
+          "name": "Monday.com account"
         }
       }
     },
@@ -266,21 +271,19 @@
       "name": "Process User Lookup",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2865, 220]
+      "position": [3152, 224]
     },
     {
       "parameters": {
         "mode": "combine",
         "combineBy": "combineByPosition",
-        "options": {
-          "waitForAllItems": true
-        }
+        "options": {}
       },
       "id": "merge-lookup-001",
       "name": "Merge User Data",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [2715, 380]
+      "position": [3376, 296]
     },
     {
       "parameters": {
@@ -290,7 +293,7 @@
       "name": "Prepare Column Values",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2640, 300]
+      "position": [3600, 296]
     },
     {
       "parameters": {
@@ -304,11 +307,11 @@
       "name": "Monday - Update Item",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [2880, 300],
+      "position": [3824, 296],
       "credentials": {
         "mondayComApi": {
-          "id": "monday-api",
-          "name": "Monday.com API"
+          "id": "81ZKNPfmUGTEOCKI",
+          "name": "Monday.com account"
         }
       }
     },
@@ -316,15 +319,13 @@
       "parameters": {
         "mode": "combine",
         "combineBy": "combineByPosition",
-        "options": {
-          "waitForAllItems": true
-        }
+        "options": {}
       },
       "id": "merge-001",
       "name": "Merge Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [3120, 300]
+      "position": [4048, 296]
     },
     {
       "parameters": {
@@ -334,18 +335,15 @@
       "name": "Create Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3360, 300]
+      "position": [4272, 296]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ $json }}"
-      },
+      "parameters": {},
       "id": "respond-001",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3600, 300],
+      "position": [4496, 296]
     }
   ],
   "connections": {
@@ -580,6 +578,6 @@
   "staticData": null,
   "tags": ["monday.com", "ai-tasks", "user-assignment", "email-lookup"],
   "triggerCount": 1,
-  "updatedAt": "2025-08-04T10:00:00.000Z",
-  "versionId": "2.0-enhanced"
+  "updatedAt": "2025-08-06T01:27:49.000Z",
+  "versionId": "a2b2a95a-5a29-4c7b-a0f8-d5ec4c031634"
 }

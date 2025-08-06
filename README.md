@@ -18,8 +18,10 @@ Generate 10 realistic project tasks with AI and automatically add them to your M
    - **OpenRouter API**: Use the predefined "OpenRouter account" credential
      - Go to n8n Credentials → OpenRouter account
      - Add your OpenRouter API key
-   - **Monday.com API**: Create Monday.com credential with your API token
-     - Used for both task creation AND user lookup
+   - **Monday.com API**: Use the "Monday.com account" credential (ID: 81ZKNPfmUGTEOCKI)
+     - Go to n8n Credentials → Monday.com account
+     - Add your Monday.com API token
+     - Used for both task creation AND user lookup via GraphQL API
 
 3. **Activate & Use**
    - Activate the workflow
@@ -50,13 +52,15 @@ Generate 10 realistic project tasks with AI and automatically add them to your M
 ## 🔧 Enhanced Features
 
 - ✅ **Email-based Assignment** - Automatically assigns tasks to users by email
-- ✅ **User ID Resolution** - Looks up Monday.com user IDs from email addresses
+- ✅ **User ID Resolution** - Looks up Monday.com user IDs from email addresses via GraphQL API
 - ✅ **Smart Group Targeting** - Defaults to "To-Do" group for immediate workflow integration
 - ✅ **Proper Column Mapping** - Maps to actual Monday.com column IDs (text9, priority_1, project_owner, numbers)
+- ✅ **Dual Credential Support** - Uses both generic and predefined Monday.com credentials for reliability
 - ✅ **AI-powered** task generation with robust fallbacks
 - ✅ **Input validation** and comprehensive error handling
 - ✅ **Conditional flows** for user lookup and assignment
 - ✅ **Professional logging** for debugging and monitoring
+- ✅ **Production-ready** error handling and workflow stability
 
 ## 🏗️ Workflow Architecture
 
