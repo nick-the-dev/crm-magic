@@ -45,6 +45,39 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
 - **Monday Board ID**: `9744010967`
 - **Test Email**: `gluknik+1@gmail.com`
 
+## CRITICAL: ACTUAL TESTING PROTOCOL (LEARNED FROM FAILURE)
+
+### ⚠️ When User Says "Fix This" - VERIFY IT ACTUALLY WORKS
+1. **Deploy to n8n** - Update the workflow with full update
+2. **Test with real data** - Run the webhook test command
+3. **CHECK MONDAY.COM DIRECTLY** - Count tasks, verify owners assigned
+4. **Check execution logs** - Look for specific error messages
+5. **Only claim success when proven** - User frustration is justified if you don't verify
+
+### The Test Command That ACTUALLY Works
+```javascript
+mcp__n8n-mcp__n8n_trigger_webhook_workflow({
+  webhookUrl: "https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks",
+  httpMethod: "POST",
+  data: {
+    projectDescription: "Build an AI-powered customer feedback analysis system",
+    boardId: "9744010967",
+    assigneeEmails: "gluknik+1@gmail.com"
+  },
+  waitForResponse: true
+})
+```
+
+### Verification Checklist (DO ALL OF THESE)
+- [ ] Workflow returns `{"success": true, "tasksCreated": 10}`
+- [ ] Check Monday.com board 9744010967 for new tasks
+- [ ] Verify "Nick T" appears in Owner column for all tasks
+- [ ] Confirm group was created (check group name)
+- [ ] Check priority, hours, description are populated
+
+### Common Pitfall: Escaped Quotes in Code Nodes
+Watch for `\"person\"` vs `"person"` in JavaScript within JSON. This single issue blocked task creation for multiple attempts.
+
 ## Best Practices & Instructions
 
 ### 1. Code Style & Conventions
@@ -139,14 +172,20 @@ mcp__monday-api-mcp__list_workspaces()
 - ✅ Webhook trigger system
 - ✅ Error handling and validation
 
-### Known Issues
+### Known Issues  
 - None currently - workflow is production ready
 
+### Critical Fix Applied (2025-08-07)
+- **Issue**: Tasks weren't being created due to escaped quotes syntax error
+- **Solution**: Fixed `kind: \"person\"` to `kind: "person"` in Prep Item With Owner node
+- **Result**: All 10 tasks now create with owners properly assigned
+
 ### Recent Updates
+- Fixed escaped quotes syntax error in owner assignment (2025-08-07)
 - Fixed workflow bottleneck in data merging
-- Implemented AI-only parsing (removed fallback)
+- Implemented AI-only parsing (removed fallback)  
 - Updated all node connections for proper data flow
-- Validated all 10 tasks are created successfully
+- Validated all 10 tasks are created with owners assigned
 
 ## Development Workflow
 
@@ -176,10 +215,11 @@ mcp__monday-api-mcp__list_workspaces()
 ## Quick Reference
 
 ### File Locations
-- Main workflow: `monday-tasks-generator-enhanced.json`
-- Test script: `test-workflow.js`
+- Main workflow: `workflows/monday-tasks-generator-enhanced.json`
+- Test script: `test/test-workflow.js`
 - Testing docs: `docs/testing/testing-instructions.md`
 - Quick tests: `docs/testing/quick-test-checklist.md`
+- **SOLUTION DOC**: `docs/testing/SOLUTION-OWNER-ASSIGNMENT.md` (READ THIS!)
 
 ### API Endpoints
 - Webhook: `https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks`
@@ -212,4 +252,5 @@ mcp__monday-api-mcp__list_workspaces()
 
 ---
 *Last Updated: 2025-08-07*
-*Status: Production Ready*
+*Status: Production Ready - Owner Assignment FIXED and VERIFIED*
+*Key Learning: Always verify in Monday.com, don't trust workflow execution alone*
