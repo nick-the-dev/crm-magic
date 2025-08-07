@@ -1,5 +1,5 @@
 {
-  "name": "Monday.com AI Tasks Generator - Enhanced",
+  "name": "Monday.com AI Tasks Generator - Simplified Owner Assignment",
   "nodes": [
     {
       "parameters": {
@@ -81,7 +81,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse AI response - AI only, no fallback\nconst validatedData = $('Validate Input Data').item.json;\nlet tasks = [];\nlet aiGroupName = null;\n\n// Extract AI response\nconst aiResponse = $json.choices[0].message.content;\nconsole.log('AI Response:', aiResponse);\n\n// Find JSON in the AI response\nconst jsonMatch = aiResponse.match(/\\{[\\s\\S]*\\}/s);\nif (!jsonMatch) {\n  throw new Error('No JSON found in AI response');\n}\n\nconst aiData = JSON.parse(jsonMatch[0]);\nconsole.log('Parsed AI data:', JSON.stringify(aiData));\n\nif (!aiData.tasks || !Array.isArray(aiData.tasks) || aiData.tasks.length === 0) {\n  throw new Error('AI did not return valid tasks array');\n}\n\ntasks = aiData.tasks.slice(0, 10);\naiGroupName = aiData.groupName || 'AI Tasks';\n\n// If we have assignee emails, assign them to tasks\nif (validatedData.assigneeEmails && validatedData.assigneeEmails.length > 0) {\n  tasks = tasks.map((task, index) => {\n    const assigneeIndex = index % validatedData.assigneeEmails.length;\n    return {\n      ...task,\n      assignee: validatedData.assigneeEmails[assigneeIndex]\n    };\n  });\n}\n\nreturn [{\n  json: {\n    tasks: tasks,\n    projectDescription: validatedData.projectDescription,\n    boardId: validatedData.boardId,\n    groupId: validatedData.groupId,\n    groupName: validatedData.groupName,\n    aiGroupName: aiGroupName,\n    assigneeEmails: validatedData.assigneeEmails,\n    aiUsed: true,\n    tasksCount: tasks.length\n  }\n}];"
+        "jsCode": "// Parse AI response - AI only, no fallback\nconst validatedData = $('Validate Input Data').item.json;\nlet tasks = [];\nlet aiGroupName = null;\n\n// Extract AI response\nconst aiResponse = $json.choices[0].message.content;\nconsole.log('AI Response:', aiResponse);\n\n// Find JSON in the AI response\nconst jsonMatch = aiResponse.match(/{[\\s\\S]*}/s);\nif (!jsonMatch) {\n  throw new Error('No JSON found in AI response');\n}\n\nconst aiData = JSON.parse(jsonMatch[0]);\nconsole.log('Parsed AI data:', JSON.stringify(aiData));\n\nif (!aiData.tasks || !Array.isArray(aiData.tasks) || aiData.tasks.length === 0) {\n  throw new Error('AI did not return valid tasks array');\n}\n\ntasks = aiData.tasks.slice(0, 10);\naiGroupName = aiData.groupName || 'AI Tasks';\n\n// If we have assignee emails, assign them to tasks\nif (validatedData.assigneeEmails && validatedData.assigneeEmails.length > 0) {\n  tasks = tasks.map((task, index) => {\n    const assigneeIndex = index % validatedData.assigneeEmails.length;\n    return {\n      ...task,\n      assignee: validatedData.assigneeEmails[assigneeIndex]\n    };\n  });\n}\n\nreturn [{\n  json: {\n    tasks: tasks,\n    projectDescription: validatedData.projectDescription,\n    boardId: validatedData.boardId,\n    groupId: validatedData.groupId,\n    groupName: validatedData.groupName,\n    aiGroupName: aiGroupName,\n    assigneeEmails: validatedData.assigneeEmails,\n    aiUsed: true,\n    tasksCount: tasks.length\n  }\n}];"
       },
       "id": "parse-001",
       "name": "Parse AI Tasks",
@@ -91,7 +91,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Lookup all unique assignee emails BEFORE creating items\nconst data = $json;\nconst tasks = data.tasks || [];\n\nconsole.log('=== PRE-CREATION USER LOOKUP ===');\nconsole.log('Total tasks:', tasks.length);\n\n// Extract unique emails from tasks\nconst uniqueEmails = new Set();\ntasks.forEach(task => {\n  if (task.assignee && typeof task.assignee === 'string' && task.assignee.includes('@')) {\n    uniqueEmails.add(task.assignee.trim());\n  }\n});\n\nconsole.log('Unique emails to lookup:', Array.from(uniqueEmails));\n\nif (uniqueEmails.size === 0) {\n  console.log('No emails to lookup, passing through');\n  return [{\n    json: {\n      ...data,\n      userLookupMap: {},\n      needsUserLookup: false\n    }\n  }];\n}\n\n// Build GraphQL query for all emails at once\nconst emailsArray = Array.from(uniqueEmails);\nconst emailsString = emailsArray.map(email => `\"${email}\"`).join(', ');\nconst query = `\n  query {\n    users(emails: [${emailsString}]) {\n      id\n      name\n      email\n    }\n  }\n`;\n\nconsole.log('GraphQL query for bulk lookup:', query);\n\nreturn [{\n  json: {\n    ...data,\n    graphqlQuery: query,\n    emailsToLookup: emailsArray,\n    needsUserLookup: true\n  }\n}];"
+        "jsCode": "// Lookup all unique assignee emails BEFORE creating items\nconst data = $json;\nconst tasks = data.tasks || [];\n\nconsole.log('=== PRE-CREATION USER LOOKUP ===');\nconsole.log('Total tasks:', tasks.length);\n\n// Extract unique emails from tasks\nconst uniqueEmails = new Set();\ntasks.forEach(task => {\n  if (task.assignee && typeof task.assignee === 'string' && task.assignee.includes('@')) {\n    uniqueEmails.add(task.assignee.trim());\n  }\n});\n\nconsole.log('Unique emails to lookup:', Array.from(uniqueEmails));\n\n// Always pass through data, with or without emails\nif (uniqueEmails.size === 0) {\n  console.log('No emails to lookup, passing through with empty map');\n  return [{\n    json: {\n      ...data,\n      userLookupMap: {},\n      emailsToLookup: [],\n      skipLookup: true\n    }\n  }];\n}\n\n// Build GraphQL query for all emails at once\nconst emailsArray = Array.from(uniqueEmails);\nconst emailsString = emailsArray.map(email => `\\\"${email}\\\"`).join(', ');\nconst query = `\n  query {\n    users(emails: [${emailsString}]) {\n      id\n      name\n      email\n    }\n  }\n`;\n\nconsole.log('GraphQL query for bulk lookup:', query);\n\nreturn [{\n  json: {\n    ...data,\n    graphqlQuery: query,\n    emailsToLookup: emailsArray,\n    skipLookup: false\n  }\n}];"
       },
       "id": "user-lookup-prep-bulk",
       "name": "Prepare Bulk User Lookup",
@@ -101,49 +101,20 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition1",
-              "leftValue": "={{ $json.needsUserLookup }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-needs-bulk-lookup",
-      "name": "IF - Needs Bulk Lookup",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1360, 304]
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "https://api.monday.com/v2",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "mondayComApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"query\": $json.graphqlQuery } }}",
+        "jsonBody": "={{ { \"query\": $json.skipLookup ? \"query { users(limit: 0) { id } }\" : $json.graphqlQuery } }}",
         "options": {}
       },
       "id": "bulk-user-lookup",
       "name": "Monday - Bulk User Lookup",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1584, 224],
+      "position": [1360, 304],
       "credentials": {
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
@@ -153,27 +124,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Process bulk user lookup results and create email->userId map\nconst lookupResult = $json;\nconst originalData = $input.first().json;\n\nconsole.log('=== BULK USER LOOKUP RESULTS ===');\nconsole.log('Lookup response:', JSON.stringify(lookupResult, null, 2));\n\nconst userLookupMap = {};\n\nif (lookupResult.data && lookupResult.data.users && Array.isArray(lookupResult.data.users)) {\n  lookupResult.data.users.forEach(user => {\n    if (user.email && user.id) {\n      userLookupMap[user.email.toLowerCase()] = parseInt(user.id);\n      console.log(`Mapped ${user.email} -> ${user.id}`);\n    }\n  });\n  console.log('Created user lookup map:', userLookupMap);\n} else {\n  console.log('No users found in response');\n}\n\nreturn [{\n  json: {\n    ...originalData,\n    userLookupMap: userLookupMap\n  }\n}];"
+        "jsCode": "// Process bulk user lookup results and create email->userId map\nconst lookupResult = $json;\nconst originalData = $input.first().json;\n\nconsole.log('=== BULK USER LOOKUP RESULTS ===');\nconsole.log('Skip lookup flag:', originalData.skipLookup);\nconsole.log('Original data preserved:', JSON.stringify(originalData, null, 2));\n\nlet userLookupMap = {};\n\nif (originalData.skipLookup) {\n  console.log('Lookup was skipped, using empty map');\n} else if (lookupResult.data && lookupResult.data.users && Array.isArray(lookupResult.data.users)) {\n  lookupResult.data.users.forEach(user => {\n    if (user.email && user.id) {\n      userLookupMap[user.email.toLowerCase()] = parseInt(user.id);\n      console.log(`Mapped ${user.email} -> ${user.id}`);\n    }\n  });\n  console.log('Created user lookup map:', userLookupMap);\n} else {\n  console.log('No users found in response');\n}\n\n// Make sure we pass through ALL original data fields\nreturn [{\n  json: {\n    tasks: originalData.tasks,\n    projectDescription: originalData.projectDescription,\n    boardId: originalData.boardId,\n    groupId: originalData.groupId,\n    groupName: originalData.groupName,\n    aiGroupName: originalData.aiGroupName,\n    assigneeEmails: originalData.assigneeEmails,\n    aiUsed: originalData.aiUsed,\n    tasksCount: originalData.tasksCount,\n    userLookupMap: userLookupMap\n  }\n}];"
       },
       "id": "process-bulk-lookup",
       "name": "Process Bulk Lookup",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1808, 224]
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineByPosition",
-        "options": {
-          "includeUnpaired": true
-        }
-      },
-      "id": "merge-lookup-results",
-      "name": "Merge Lookup Results",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [2032, 304]
+      "position": [1584, 304]
     },
     {
       "parameters": {
@@ -202,7 +159,7 @@
       "name": "IF - Group Exists",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2256, 304]
+      "position": [1808, 304]
     },
     {
       "parameters": {
@@ -214,7 +171,7 @@
       "name": "Monday - Create Group",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [2480, 368],
+      "position": [2032, 368],
       "credentials": {
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
@@ -224,13 +181,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Split tasks and prepare for creation WITH owner IDs\nconst parseTasksData = $('Merge Lookup Results').item.json;\nconsole.log('Data after user lookup:', JSON.stringify(parseTasksData, null, 2));\n\nconst currentData = $json;\nconst userLookupMap = parseTasksData.userLookupMap || {};\n\n// Determine final group ID\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  finalGroupId = parseTasksData.groupId;\n} else if (parseTasksData.groupName && parseTasksData.groupName.toLowerCase() === 'to-do') {\n  finalGroupId = 'new_group29179';\n} else {\n  finalGroupId = currentData.id || 'new_group29179';\n}\n\nconsole.log('Using group ID:', finalGroupId);\n\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\nconsole.log('User lookup map:', userLookupMap);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks with owner IDs already resolved\nconst outputs = [];\ntasks.forEach((task, index) => {\n  let ownerId = null;\n  \n  // Lookup owner ID if assignee is an email\n  if (task.assignee && typeof task.assignee === 'string' && task.assignee.includes('@')) {\n    const emailLower = task.assignee.toLowerCase();\n    ownerId = userLookupMap[emailLower] || null;\n    console.log(`Task ${index + 1}: ${task.title} - Assignee: ${task.assignee} - Owner ID: ${ownerId}`);\n  }\n  \n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription,\n      ownerId: ownerId // Include resolved owner ID\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items');\nreturn outputs;"
+        "jsCode": "// Split tasks and prepare for creation WITH owner IDs\nconst parseTasksData = $json;\nconsole.log('Data after user lookup:', JSON.stringify(parseTasksData, null, 2));\n\nconst currentData = $json;\nconst userLookupMap = parseTasksData.userLookupMap || {};\n\n// Determine final group ID\nlet finalGroupId;\nif (parseTasksData.groupId) {\n  finalGroupId = parseTasksData.groupId;\n} else if (parseTasksData.groupName && parseTasksData.groupName.toLowerCase() === 'to-do') {\n  finalGroupId = 'new_group29179';\n} else {\n  finalGroupId = currentData.id || 'new_group29179';\n}\n\nconsole.log('Using group ID:', finalGroupId);\n\nconst tasks = parseTasksData.tasks || [];\nconsole.log('Tasks found:', tasks.length);\nconsole.log('User lookup map:', userLookupMap);\n\nif (!Array.isArray(tasks) || tasks.length === 0) {\n  return [{\n    json: {\n      error: 'No tasks array found',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Split tasks with owner IDs already resolved\nconst outputs = [];\ntasks.forEach((task, index) => {\n  let ownerId = null;\n  \n  // Lookup owner ID if assignee is an email\n  if (task.assignee && typeof task.assignee === 'string' && task.assignee.includes('@')) {\n    const emailLower = task.assignee.toLowerCase();\n    ownerId = userLookupMap[emailLower] || null;\n    console.log(`Task ${index + 1}: ${task.title} - Assignee: ${task.assignee} - Owner ID: ${ownerId}`);\n  }\n  \n  outputs.push({\n    json: {\n      boardId: parseTasksData.boardId,\n      groupId: finalGroupId,\n      task: task,\n      taskIndex: index + 1,\n      totalTasks: tasks.length,\n      projectDescription: parseTasksData.projectDescription,\n      ownerId: ownerId // Include resolved owner ID\n    }\n  });\n});\n\nconsole.log('Split into', outputs.length, 'task items');\nreturn outputs;"
       },
       "id": "split-tasks-with-owners",
       "name": "Split Tasks With Owners",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2704, 304]
+      "position": [2256, 304]
     },
     {
       "parameters": {
@@ -241,7 +198,7 @@
       "name": "Prep Item With Owner",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2928, 304]
+      "position": [2480, 304]
     },
     {
       "parameters": {
@@ -257,7 +214,7 @@
       "name": "Monday - Create Item With Owner",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [3152, 304],
+      "position": [2704, 304],
       "credentials": {
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
@@ -273,7 +230,7 @@
       "name": "Create Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3376, 304]
+      "position": [2928, 304]
     },
     {
       "parameters": {},
@@ -281,7 +238,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3600, 304]
+      "position": [3152, 304]
     }
   ],
   "connections": {
@@ -333,27 +290,9 @@
       "main": [
         [
           {
-            "node": "IF - Needs Bulk Lookup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF - Needs Bulk Lookup": {
-      "main": [
-        [
-          {
             "node": "Monday - Bulk User Lookup",
             "type": "main",
             "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Merge Lookup Results",
-            "type": "main",
-            "index": 1
           }
         ]
       ]
@@ -370,17 +309,6 @@
       ]
     },
     "Process Bulk Lookup": {
-      "main": [
-        [
-          {
-            "node": "Merge Lookup Results",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge Lookup Results": {
       "main": [
         [
           {
@@ -474,9 +402,10 @@
     "ai-tasks",
     "user-assignment",
     "email-lookup",
-    "owner-during-creation"
+    "owner-during-creation",
+    "simplified-flow"
   ],
   "triggerCount": 1,
-  "updatedAt": "2025-08-07T04:30:00.000Z",
-  "versionId": "restructured-owner-assignment"
+  "updatedAt": "2025-08-07T05:00:00.000Z",
+  "versionId": "simplified-owner-assignment"
 }
