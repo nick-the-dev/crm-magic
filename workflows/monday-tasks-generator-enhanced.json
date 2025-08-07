@@ -338,7 +338,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Now we have the combined data with user lookup results\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\nconst userId = data.userId;\nconst userFound = data.userFound;\n\nconsole.log('=== PREPARE COLUMN VALUES ===');\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\nconsole.log('User ID found:', userId, 'Type:', typeof userId);\nconsole.log('User found flag:', userFound);\n\n// Create column values with proper Monday.com format\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n  console.log('Added description to Notes');\n}\n\n// Add priority as status using proper format\nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  \n  const priorityKey = task.priority.toLowerCase();\n  const priorityValue = priorityMap[priorityKey] || priorityMap['medium'];\n  \n  columnValues.priority_1 = priorityValue;\n  console.log('Added priority:', priorityValue);\n}\n\n// Set owner based on user lookup result\n// Use personsAndTeams format as it works with Monday.com API\nif (userId && userFound) {\n  // Use the personsAndTeams format that Monday.com expects\n  columnValues.project_owner = {\n    personsAndTeams: [\n      {\n        id: userId,\n        kind: \"person\"\n      }\n    ]\n  };\n  console.log('✅ Setting owner with personsAndTeams format:', JSON.stringify(columnValues.project_owner));\n} else if (task.assignee && typeof task.assignee === 'string') {\n  // Store as text in Notes if user not found\n  columnValues.text9 = (columnValues.text9 || '') + ' (Assignee: ' + task.assignee + ')';\n  console.log('⚠️ User not found, added assignee to notes:', task.assignee);\n} else {\n  console.log('❌ No user ID or assignee available');\n}\n\n// Add estimated hours\nif (task.estimatedHours) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('Added estimated hours:', task.estimatedHours);\n}\n\nconsole.log('=== FINAL COLUMN VALUES ===');\nconsole.log(JSON.stringify(columnValues, null, 2));\n\nreturn {\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task,\n    debugInfo: {\n      userId: userId,\n      userFound: userFound,\n      hasOwner: !!columnValues.project_owner\n    }\n  }\n};"
+        "jsCode": "// Now we have the combined data with user lookup results\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\nconst userId = data.userId;\nconst userFound = data.userFound;\n\nconsole.log('=== PREPARE COLUMN VALUES ===');\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\nconsole.log('User ID found:', userId, 'Type:', typeof userId);\nconsole.log('User found flag:', userFound);\n\n// Create column values with proper Monday.com format\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n  console.log('Added description to Notes');\n}\n\n// Add priority as status using proper format  \nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  \n  const priorityKey = task.priority.toLowerCase();\n  const priorityValue = priorityMap[priorityKey] || priorityMap['medium'];\n  \n  columnValues.priority_1 = priorityValue;\n  console.log('Added priority:', priorityValue);\n}\n\n// Set owner based on user lookup result\n// For n8n's Monday.com node, just pass the user ID as string\nif (userId && userFound) {\n  columnValues.project_owner = String(userId);\n  console.log('✅ Setting owner with user ID:', columnValues.project_owner);\n} else if (task.assignee && typeof task.assignee === 'string') {\n  // Store as text in Notes if user not found\n  columnValues.text9 = (columnValues.text9 || '') + ' (Assignee: ' + task.assignee + ')';\n  console.log('⚠️ User not found, added assignee to notes:', task.assignee);\n} else {\n  console.log('❌ No user ID or assignee available');\n}\n\n// Add estimated hours\nif (task.estimatedHours) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('Added estimated hours:', task.estimatedHours);\n}\n\nconsole.log('=== FINAL COLUMN VALUES ===');\nconsole.log(JSON.stringify(columnValues, null, 2));\n\nreturn {\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task,\n    debugInfo: {\n      userId: userId,\n      userFound: userFound,\n      hasOwner: !!columnValues.project_owner\n    }\n  }\n};"
       },
       "id": "prepare-columns-001",
       "name": "Prepare Column Values",
@@ -351,19 +351,16 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.monday.com/v2",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "mondayComApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"query\": `mutation { change_multiple_column_values(board_id: ${$json.boardId}, item_id: ${$json.itemId}, column_values: ${$json.columnValues}) { id name } }` } }}",
-        "options": {}
+        "resource": "boardItem",
+        "operation": "changeMultipleColumnValues",
+        "boardId": "={{ $json.boardId }}",
+        "itemId": "={{ $json.itemId }}",
+        "columnValues": "={{ $json.columnValues }}"
       },
       "id": "update-item-001",
-      "name": "Monday - Update Item (GraphQL)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "name": "Monday - Update Item",
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
       "position": [
         3824,
         304
@@ -384,24 +381,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4272,
+        4048,
         304
       ]
-    },
-    {
-      "id": "wait-001",
-      "name": "Wait 500ms",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        3712,
-        304
-      ],
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 0.5,
-        "unit": "seconds"
-      }
     },
     {
       "parameters": {},
@@ -410,7 +392,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4496,
+        4272,
         304
       ]
     }
@@ -610,25 +592,14 @@
       "main": [
         [
           {
-            "node": "Wait 500ms",
+            "node": "Monday - Update Item",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait 500ms": {
-      "main": [
-        [
-          {
-            "node": "Monday - Update Item (GraphQL)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Monday - Update Item (GraphQL)": {
+    "Monday - Update Item": {
       "main": [
         [
           {
@@ -651,7 +622,6 @@
       ]
     }
   },
-  "pinData": {},
   "settings": {
     "executionOrder": "v1"
   },
@@ -663,6 +633,6 @@
     "email-lookup"
   ],
   "triggerCount": 1,
-  "updatedAt": "2025-08-06T23:11:24.000Z",
-  "versionId": "16eaf82e-9fb6-4c54-a6cb-9baacf3412a3"
+  "updatedAt": "2025-08-07T02:44:00.000Z",
+  "versionId": "final-simplified-version"
 }
