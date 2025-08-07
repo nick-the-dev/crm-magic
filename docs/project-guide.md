@@ -23,7 +23,7 @@ This project automates Monday.com task management using AI-powered task generati
 ```
 
 ### 2. Manual Testing
-See `docs/testing/QUICK_TEST_CHECKLIST.md` for the fastest test method.
+See `docs/testing/quick-test-checklist.md` for the fastest test method.
 
 ## Architecture
 
@@ -196,8 +196,8 @@ mcp__n8n-mcp__n8n_get_execution({
 ## Resources
 
 ### Internal Documentation
-- [Testing Instructions](testing/TESTING_INSTRUCTIONS.md)
-- [Quick Test Checklist](testing/QUICK_TEST_CHECKLIST.md)
+- [Testing Instructions](testing/testing-instructions.md)
+- [Quick Test Checklist](testing/quick-test-checklist.md)
 - [Claude Instructions](../CLAUDE.md)
 
 ### External Resources

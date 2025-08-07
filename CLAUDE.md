@@ -9,8 +9,9 @@ crm-magic/
 ├── .claude/                     # Claude Code configuration
 │   └── commands/                # Custom slash commands
 ├── docs/                        # Documentation
-│   ├── TESTING_INSTRUCTIONS.md # Comprehensive testing guide
-│   ├── QUICK_TEST_CHECKLIST.md # Quick test reference
+│   ├── testing/
+│   │   ├── testing-instructions.md  # Comprehensive testing guide
+│   │   └── quick-test-checklist.md  # Quick test reference
 │   └── workflows/              # Workflow documentation
 ├── workflows/                   # n8n workflow files
 │   └── monday-tasks-generator-enhanced.json
@@ -92,6 +93,8 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
 
 ## MCP Tools Usage
 
+**Note**: For detailed n8n workflow development instructions, see `.claude/n8n_workflow_instructions.md`
+
 ### Essential n8n MCP Commands
 ```javascript
 // List workflows
@@ -164,8 +167,8 @@ mcp__monday-api-mcp__list_workspaces()
 ### File Locations
 - Main workflow: `monday-tasks-generator-enhanced.json`
 - Test script: `test-workflow.js`
-- Testing docs: `TESTING_INSTRUCTIONS.md`
-- Quick tests: `QUICK_TEST_CHECKLIST.md`
+- Testing docs: `docs/testing/testing-instructions.md`
+- Quick tests: `docs/testing/quick-test-checklist.md`
 
 ### API Endpoints
 - Webhook: `https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks`

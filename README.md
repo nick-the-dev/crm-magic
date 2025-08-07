@@ -13,8 +13,8 @@ crm-magic/
 │       └── check-board.md            # Board inspection command
 ├── docs/                              # Documentation
 │   └── testing/                       # Testing documentation
-│       ├── TESTING_INSTRUCTIONS.md   # Comprehensive testing guide
-│       └── QUICK_TEST_CHECKLIST.md   # Quick test reference
+│       ├── testing-instructions.md    # Comprehensive testing guide
+│       └── quick-test-checklist.md    # Quick test reference
 ├── workflows/                         # n8n workflow files
 │   └── monday-tasks-generator-enhanced.json
 ├── test/                              # Test files
@@ -27,8 +27,8 @@ crm-magic/
 ## 📝 Quick Reference
 
 - **Main Workflow**: `workflows/monday-tasks-generator-enhanced.json`
-- **Testing Guide**: `docs/testing/TESTING_INSTRUCTIONS.md`
-- **Quick Tests**: `docs/testing/QUICK_TEST_CHECKLIST.md`
+- **Testing Guide**: `docs/testing/testing-instructions.md`
+- **Quick Tests**: `docs/testing/quick-test-checklist.md`
 - **Claude Instructions**: `CLAUDE.md` - Best practices and project configuration
 
 ## 🚀 Quick Test
