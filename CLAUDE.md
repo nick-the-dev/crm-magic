@@ -51,8 +51,18 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
 1. **Deploy to n8n** - Update the workflow with full update
 2. **Test with real data** - Run the webhook test command
 3. **CHECK MONDAY.COM DIRECTLY** - Count tasks, verify owners assigned
-4. **Check execution logs** - Look for specific error messages
+4. **Check execution logs** - Look for specific error messages (⚠️ see token limit warning below)
 5. **Only claim success when proven** - User frustration is justified if you don't verify
+
+### ⚠️ CRITICAL: n8n Execution Data Token Limit
+**NEVER** use `includeData: true` when calling `n8n_list_executions` - it will exceed token limits!
+```javascript
+// ❌ WRONG - Will exceed token limits
+mcp__n8n-mcp__n8n_list_executions({ workflowId: "some-id", limit: 1, includeData: true })
+
+// ✅ CORRECT - Safe to use
+mcp__n8n-mcp__n8n_list_executions({ workflowId: "some-id", limit: 1, includeData: false })
+```
 
 ### The Test Command That ACTUALLY Works
 ```javascript
@@ -140,10 +150,17 @@ mcp__n8n-mcp__n8n_get_workflow_details({ id: "ixbSnRIIcxZnJVjR" })
 // Validate workflow
 mcp__n8n-mcp__n8n_validate_workflow({ id: "ixbSnRIIcxZnJVjR" })
 
-// Check executions
+// Check executions (⚠️ NEVER use includeData: true - exceeds token limits!)
 mcp__n8n-mcp__n8n_list_executions({
   workflowId: "ixbSnRIIcxZnJVjR",
-  limit: 10
+  limit: 10,
+  includeData: false  // ⚠️ CRITICAL: Must be false to avoid token limit errors
+})
+
+// Update workflow in n8n (after local file changes)
+mcp__n8n-mcp__n8n_update_full_workflow({
+  id: "ixbSnRIIcxZnJVjR",
+  // ... workflow definition from local file
 })
 ```
 
@@ -190,13 +207,20 @@ mcp__monday-api-mcp__list_workspaces()
 ## Development Workflow
 
 ### CRITICAL: Workflow Change Process
-**ALL WORKFLOW CHANGES MUST FOLLOW THIS ORDER:**
-1. **Local First**: Make all changes in the local project folder (workflows/*.json)
-2. **Deploy to n8n**: Upload the modified workflow to n8n instance
-3. **Test in n8n**: Thoroughly test the workflow in the n8n interface
-4. **Push to GitHub**: Only after successful testing, commit and push changes
+**ALL WORKFLOW CHANGES MUST FOLLOW THIS EXACT ORDER - NO EXCEPTIONS:**
+1. **Update Local File FIRST**: Make all changes in `workflows/monday-tasks-generator-enhanced.json`
+2. **Deploy to n8n**: Use `mcp__n8n-mcp__n8n_update_full_workflow()` to upload to n8n instance
+3. **Test in n8n**: Run the webhook test command and verify in Monday.com
+4. **Commit to Git**: After successful testing, commit with descriptive message
+5. **Push to GitHub**: Push the changes to the remote repository
+
+**REMEMBER**: Every workflow change requires THREE UPDATES:
+- ✅ Local file (workflows/*.json) 
+- ✅ n8n instance (via MCP update)
+- ✅ GitHub repository (git commit & push)
 
 **NEVER** update n8n directly without first modifying the local files.
+**NEVER** forget to push to GitHub after successful testing.
 
 ### General Development Process
 1. **Start with Todo List**: Always use TodoWrite to plan tasks
@@ -252,5 +276,8 @@ mcp__monday-api-mcp__list_workspaces()
 
 ---
 *Last Updated: 2025-08-07*
-*Status: Production Ready - Owner Assignment FIXED and VERIFIED*
-*Key Learning: Always verify in Monday.com, don't trust workflow execution alone*
+*Status: Production Ready - Workflow Fully Functional*
+*Key Learnings:*
+- *Always verify in Monday.com, don't trust workflow execution alone*
+- *NEVER use includeData: true with n8n_list_executions (token limit)*
+- *ALWAYS update local files → n8n → GitHub (in that order)*
