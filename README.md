@@ -2,14 +2,34 @@
 
 Generate 10 realistic project tasks with AI and automatically add them to your Monday.com board with smart email-based user assignment.
 
-## 📁 Files
+## 📁 Project Structure
 
-- `monday-tasks-generator-enhanced.json` - Enhanced n8n workflow with user assignment
-- `index.html` - Optional external form interface  
-- `README.md` - This file
-- `TESTING_INSTRUCTIONS.md` - Comprehensive testing guide
-- `QUICK_TEST_CHECKLIST.md` - Quick test checklist and commands
-- `test-workflow.js` - Test script with multiple payload options
+```
+crm-magic/
+├── .claude/                           # Claude Code configuration
+│   └── commands/                      # Custom slash commands
+│       ├── test-workflow.md          # Test workflow command
+│       ├── validate-workflow.md      # Validation command
+│       └── check-board.md            # Board inspection command
+├── docs/                              # Documentation
+│   └── testing/                       # Testing documentation
+│       ├── TESTING_INSTRUCTIONS.md   # Comprehensive testing guide
+│       └── QUICK_TEST_CHECKLIST.md   # Quick test reference
+├── workflows/                         # n8n workflow files
+│   └── monday-tasks-generator-enhanced.json
+├── test/                              # Test files
+│   └── test-workflow.js              # Test script with payload options
+├── index.html                        # Optional external form interface
+├── README.md                          # Project overview (this file)
+└── CLAUDE.md                          # Claude Code instructions & best practices
+```
+
+## 📝 Quick Reference
+
+- **Main Workflow**: `workflows/monday-tasks-generator-enhanced.json`
+- **Testing Guide**: `docs/testing/TESTING_INSTRUCTIONS.md`
+- **Quick Tests**: `docs/testing/QUICK_TEST_CHECKLIST.md`
+- **Claude Instructions**: `CLAUDE.md` - Best practices and project configuration
 
 ## 🚀 Quick Test
 
