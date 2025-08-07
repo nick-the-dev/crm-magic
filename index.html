@@ -213,22 +213,13 @@
             <h3>✨ What you'll get:</h3>
             <ul>
                 <li>• 10 realistic, actionable project tasks</li>
-                <li>• Detailed descriptions with acceptance criteria</li>
-                <li>• Proper priority levels and time estimates</li>
-                <li>• Smart group organization in Monday.com</li>
+                <li>• Natural, human-like task names and descriptions</li>
+                <li>• Smart priority levels and optional time distribution</li>
+                <li>• Automatic owner assignment via email lookup</li>
+                <li>• Flexible group organization in Monday.com</li>
             </ul>
         </div>
         
-        <div class="webhook-url">
-            <h4>⚠️ Setup Required:</h4>
-            <p>Before using this form, make sure to:</p>
-            <ol>
-                <li>Import the n8n workflow: <code>monday-tasks-generator.json</code></li>
-                <li>Set up your credentials: OpenRouter API and Monday.com API</li>
-                <li>Activate the workflow in n8n</li>
-                <li>The form will use the built-in n8n form trigger (no webhook URL needed!)</li>
-            </ol>
-        </div>
         
         <form id="taskForm">
             <div class="form-group">
@@ -266,6 +257,17 @@
             </div>
             
             <div class="form-group">
+                <label for="groupName">Group Name (Optional)</label>
+                <input 
+                    type="text" 
+                    id="groupName" 
+                    name="groupName" 
+                    placeholder="Custom group name (if creating new group)"
+                />
+                <small>Only used if Group ID is empty. AI will generate one if not provided.</small>
+            </div>
+            
+            <div class="form-group">
                 <label for="assigneeEmails">Assignee Emails (Optional)</label>
                 <input 
                     type="text" 
@@ -274,6 +276,19 @@
                     placeholder="user1@company.com, user2@company.com (comma-separated)"
                 />
                 <small>Enter email addresses of team members to assign tasks. If empty, tasks will use role-based assignees.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="totalHours">Total Hours Budget (Optional)</label>
+                <input 
+                    type="number" 
+                    id="totalHours" 
+                    name="totalHours" 
+                    placeholder="e.g., 120"
+                    min="10"
+                    step="1"
+                />
+                <small>If provided, AI will distribute these hours across all tasks based on complexity. Leave empty for no time estimates.</small>
             </div>
             
             <button type="submit" class="submit-btn" id="submitBtn">
@@ -293,8 +308,8 @@
         document.getElementById('taskForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Update this URL with your actual n8n webhook URL
-            const WEBHOOK_URL = 'https://automations-n8n.u841sv.easypanel.host/webhook-test/monday-tasks';
+            // n8n webhook URL
+            const WEBHOOK_URL = 'https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks';
             
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
@@ -303,9 +318,11 @@
             // Get form data
             const formData = {
                 projectDescription: document.getElementById('projectDescription').value,
-                'Monday Board ID': document.getElementById('boardId').value,
-                'Group ID (Optional)': document.getElementById('groupId').value || null,
-                'assigneeEmails': document.getElementById('assigneeEmails').value || null
+                boardId: document.getElementById('boardId').value,
+                groupId: document.getElementById('groupId').value || null,
+                groupName: document.getElementById('groupName').value || null,
+                assigneeEmails: document.getElementById('assigneeEmails').value || null,
+                totalHours: document.getElementById('totalHours').value ? parseFloat(document.getElementById('totalHours').value) : null
             };
             
             // Validate
@@ -314,10 +331,10 @@
                 return;
             }
             
-            // if (!formData.boardId || !/^\d+$/.test(formData.boardId)) {
-            //     showResult('error', 'Please enter a valid Board ID (numbers only).');
-            //     return;
-            // }
+            if (!formData.boardId || !/^\d+$/.test(formData.boardId)) {
+                showResult('error', 'Please enter a valid Board ID (numbers only).');
+                return;
+            }
             
             // Show loading state
             submitBtn.disabled = true;
