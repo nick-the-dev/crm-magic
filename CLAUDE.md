@@ -40,7 +40,8 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
 
 ### Environment Details
 - **n8n Instance**: `https://automations-n8n.u841sv.easypanel.host`
-- **Workflow ID**: `6IDxhXNS4X028T1O`
+- **Workflow ID**: `ixbSnRIIcxZnJVjR`
+- **Workflow Name**: `Monday.com AI Tasks Generator - Enhanced v2`
 - **Monday Board ID**: `9744010967`
 - **Test Email**: `gluknik+1@gmail.com`
 
@@ -101,14 +102,14 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
 mcp__n8n-mcp__n8n_list_workflows({ limit: 50 })
 
 // Get workflow details
-mcp__n8n-mcp__n8n_get_workflow_details({ id: "6IDxhXNS4X028T1O" })
+mcp__n8n-mcp__n8n_get_workflow_details({ id: "ixbSnRIIcxZnJVjR" })
 
 // Validate workflow
-mcp__n8n-mcp__n8n_validate_workflow({ id: "6IDxhXNS4X028T1O" })
+mcp__n8n-mcp__n8n_validate_workflow({ id: "ixbSnRIIcxZnJVjR" })
 
 // Check executions
 mcp__n8n-mcp__n8n_list_executions({
-  workflowId: "6IDxhXNS4X028T1O",
+  workflowId: "ixbSnRIIcxZnJVjR",
   limit: 10
 })
 ```
@@ -149,6 +150,16 @@ mcp__monday-api-mcp__list_workspaces()
 
 ## Development Workflow
 
+### CRITICAL: Workflow Change Process
+**ALL WORKFLOW CHANGES MUST FOLLOW THIS ORDER:**
+1. **Local First**: Make all changes in the local project folder (workflows/*.json)
+2. **Deploy to n8n**: Upload the modified workflow to n8n instance
+3. **Test in n8n**: Thoroughly test the workflow in the n8n interface
+4. **Push to GitHub**: Only after successful testing, commit and push changes
+
+**NEVER** update n8n directly without first modifying the local files.
+
+### General Development Process
 1. **Start with Todo List**: Always use TodoWrite to plan tasks
 2. **Research First**: Use search tools to understand the codebase
 3. **Test Incrementally**: Test each change before moving to the next

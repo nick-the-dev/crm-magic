@@ -12,7 +12,10 @@
       "name": "Webhook - Project Input",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 304],
+      "position": [
+        240,
+        304
+      ],
       "webhookId": "monday-tasks-webhook"
     },
     {
@@ -23,7 +26,10 @@
       "name": "Validate Input Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [464, 304]
+      "position": [
+        464,
+        304
+      ]
     },
     {
       "parameters": {
@@ -67,7 +73,10 @@
       "name": "AI - Generate Tasks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [688, 304],
+      "position": [
+        688,
+        304
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "OpenRouter account",
@@ -87,7 +96,10 @@
       "name": "Parse AI Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [912, 304]
+      "position": [
+        912,
+        304
+      ]
     },
     {
       "parameters": {
@@ -116,7 +128,10 @@
       "name": "IF - Group Exists",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1136, 304]
+      "position": [
+        1136,
+        304
+      ]
     },
     {
       "parameters": {
@@ -128,7 +143,10 @@
       "name": "Monday - Create Group",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [1360, 368],
+      "position": [
+        1360,
+        368
+      ],
       "credentials": {
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
@@ -144,7 +162,10 @@
       "name": "Split Tasks",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1584, 304]
+      "position": [
+        1584,
+        304
+      ]
     },
     {
       "parameters": {
@@ -155,7 +176,10 @@
       "name": "Prep Create Item",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1808, 304]
+      "position": [
+        1808,
+        304
+      ]
     },
     {
       "parameters": {
@@ -169,7 +193,10 @@
       "name": "Monday - Create Item",
       "type": "n8n-nodes-base.mondayCom",
       "typeVersion": 1,
-      "position": [2032, 304],
+      "position": [
+        2032,
+        304
+      ],
       "credentials": {
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
@@ -186,7 +213,10 @@
       "name": "Combine Item Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2256, 304]
+      "position": [
+        2256,
+        304
+      ]
     },
     {
       "parameters": {
@@ -197,7 +227,10 @@
       "name": "User Lookup Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2480, 304]
+      "position": [
+        2480,
+        304
+      ]
     },
     {
       "parameters": {
@@ -226,7 +259,24 @@
       "name": "IF - Needs User Lookup",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2704, 304]
+      "position": [
+        2704,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Use Monday.com API to lookup user by email\nconst email = $json.lookupEmail;\nconsole.log('Looking up user with email:', email);\n\n// We'll use a simple HTTP request with the Monday.com API token\n// The credentials will be available through the workflow\nconst query = `\n  query {\n    users(emails: [\"${email}\"]) {\n      id\n      name\n      email\n    }\n  }\n`;\n\n// For now, we'll pass the email through and handle the lookup in the next node\n// This is because we need to use the HTTP Request node with proper auth\nreturn {\n  json: {\n    ...$json,\n    graphqlQuery: query,\n    lookupEmail: email\n  }\n};"
+      },
+      "id": "monday-user-lookup-prep",
+      "name": "Prepare GraphQL Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2928,
+        224
+      ]
     },
     {
       "parameters": {
@@ -234,36 +284,20 @@
         "url": "https://api.monday.com/v2",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "mondayComApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $credentials.httpHeaderAuth.headerValue }}"
-            }
-          ]
-        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": {
-          "query": "query { users(emails: [\"={{ $json.lookupEmail }}\"]) { id name email } }"
-        },
+        "jsonBody": "={{ { \"query\": $json.graphqlQuery } }}",
         "options": {}
       },
       "id": "monday-user-lookup-001",
       "name": "Monday - User Lookup",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2928, 224],
+      "position": [
+        3040,
+        224
+      ],
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "monday-api",
-          "name": "Monday.com API"
-        },
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
           "name": "Monday.com account"
@@ -273,13 +307,16 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Process user lookup result\nconst lookupResult = $json;\n// In runOnceForEachItem mode, we can't use $input.first()\n// Instead, get the current input data directly\nconst originalData = $input.item.json;\n\nconsole.log('User lookup result:', JSON.stringify(lookupResult));\n\nlet userId = null;\nif (lookupResult.data && lookupResult.data.users && lookupResult.data.users.length > 0) {\n  userId = parseInt(lookupResult.data.users[0].id);\n  console.log('Found user ID:', userId);\n} else {\n  console.log('User not found for email:', originalData.lookupEmail);\n}\n\nreturn {\n  json: {\n    ...originalData,\n    userId: userId,\n    userFound: userId !== null\n  }\n};"
+        "jsCode": "// Process user lookup result\nconst lookupResult = $json;\n// In runOnceForEachItem mode, we can't use $input.first()\n// Instead, get the current input data directly\nconst originalData = $input.item.json;\n\nconsole.log('=== USER LOOKUP RESULT ===');\nconsole.log('Full lookup result:', JSON.stringify(lookupResult, null, 2));\nconsole.log('Original email:', originalData.lookupEmail);\n\nlet userId = null;\nif (lookupResult.data && lookupResult.data.users && lookupResult.data.users.length > 0) {\n  userId = parseInt(lookupResult.data.users[0].id);\n  console.log('✅ Found user ID:', userId);\n  console.log('User name:', lookupResult.data.users[0].name);\n  console.log('User email:', lookupResult.data.users[0].email);\n} else if (lookupResult.errors) {\n  console.log('❌ GraphQL errors:', JSON.stringify(lookupResult.errors));\n} else {\n  console.log('❌ User not found for email:', originalData.lookupEmail);\n  console.log('Response structure:', Object.keys(lookupResult));\n}\n\nreturn {\n  json: {\n    ...originalData,\n    userId: userId,\n    userFound: userId !== null,\n    lookupResponse: lookupResult\n  }\n};"
       },
       "id": "process-user-lookup-001",
       "name": "Process User Lookup",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3152, 224]
+      "position": [
+        3152,
+        224
+      ]
     },
     {
       "parameters": {
@@ -293,32 +330,44 @@
       "name": "Merge User Data",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [3376, 304]
+      "position": [
+        3376,
+        304
+      ]
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Now we have the combined data with user lookup results\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\nconst userId = data.userId;\nconst userFound = data.userFound;\n\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\nconsole.log('User ID found:', userId);\n\n// Create column values with proper Monday.com format\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n  console.log('Added description to Notes');\n}\n\n// Add priority as status using proper format\nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  \n  const priorityKey = task.priority.toLowerCase();\n  const priorityValue = priorityMap[priorityKey] || priorityMap['medium'];\n  \n  columnValues.priority_1 = priorityValue;\n  console.log('Added priority:', priorityValue);\n}\n\n// Set owner based on user lookup result\nif (userId && userFound) {\n  columnValues.project_owner = {\n    personsAndTeams: [{ id: userId, kind: 'person' }]\n  };\n  console.log('Added owner with user ID:', userId);\n} else if (task.assignee && typeof task.assignee === 'string') {\n  // Store as text in Notes if user not found\n  columnValues.text9 = (columnValues.text9 || '') + ' (Assignee: ' + task.assignee + ')';\n  console.log('User not found, added assignee to notes:', task.assignee);\n}\n\n// Add estimated hours\nif (task.estimatedHours) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('Added estimated hours:', task.estimatedHours);\n}\n\nconsole.log('Final column values:', JSON.stringify(columnValues));\n\nreturn {\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task\n  }\n};"
+        "jsCode": "// Now we have the combined data with user lookup results\nconst data = $json;\nconst task = data.task || {};\nconst itemId = data.itemId;\nconst boardId = data.boardId;\nconst userId = data.userId;\nconst userFound = data.userFound;\n\nconsole.log('=== PREPARE COLUMN VALUES ===');\nconsole.log('Combined data received:', JSON.stringify(data));\nconsole.log('Task:', JSON.stringify(task));\nconsole.log('Item ID:', itemId);\nconsole.log('User ID found:', userId, 'Type:', typeof userId);\nconsole.log('User found flag:', userFound);\n\n// Create column values with proper Monday.com format\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n  console.log('Added description to Notes');\n}\n\n// Add priority as status using proper format\nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  \n  const priorityKey = task.priority.toLowerCase();\n  const priorityValue = priorityMap[priorityKey] || priorityMap['medium'];\n  \n  columnValues.priority_1 = priorityValue;\n  console.log('Added priority:', priorityValue);\n}\n\n// Set owner based on user lookup result\n// Use personsAndTeams format as it works with Monday.com API\nif (userId && userFound) {\n  // Use the personsAndTeams format that Monday.com expects\n  columnValues.project_owner = {\n    personsAndTeams: [\n      {\n        id: userId,\n        kind: \"person\"\n      }\n    ]\n  };\n  console.log('✅ Setting owner with personsAndTeams format:', JSON.stringify(columnValues.project_owner));\n} else if (task.assignee && typeof task.assignee === 'string') {\n  // Store as text in Notes if user not found\n  columnValues.text9 = (columnValues.text9 || '') + ' (Assignee: ' + task.assignee + ')';\n  console.log('⚠️ User not found, added assignee to notes:', task.assignee);\n} else {\n  console.log('❌ No user ID or assignee available');\n}\n\n// Add estimated hours\nif (task.estimatedHours) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('Added estimated hours:', task.estimatedHours);\n}\n\nconsole.log('=== FINAL COLUMN VALUES ===');\nconsole.log(JSON.stringify(columnValues, null, 2));\n\nreturn {\n  json: {\n    boardId: boardId,\n    itemId: itemId,\n    columnValues: JSON.stringify(columnValues),\n    task: task,\n    debugInfo: {\n      userId: userId,\n      userFound: userFound,\n      hasOwner: !!columnValues.project_owner\n    }\n  }\n};"
       },
       "id": "prepare-columns-001",
       "name": "Prepare Column Values",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3600, 304]
+      "position": [
+        3600,
+        304
+      ]
     },
     {
       "parameters": {
-        "resource": "boardItem",
-        "operation": "changeMultipleColumnValues",
-        "boardId": "={{ $json.boardId }}",
-        "itemId": "={{ $json.itemId }}",
-        "columnValues": "={{ $json.columnValues }}"
+        "method": "POST",
+        "url": "https://api.monday.com/v2",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "mondayComApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query\": `mutation { change_multiple_column_values(board_id: ${$json.boardId}, item_id: ${$json.itemId}, column_values: ${$json.columnValues}) { id name } }` } }}",
+        "options": {}
       },
       "id": "update-item-001",
-      "name": "Monday - Update Item",
-      "type": "n8n-nodes-base.mondayCom",
-      "typeVersion": 1,
-      "position": [3824, 304],
+      "name": "Monday - Update Item (GraphQL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3824,
+        304
+      ],
       "credentials": {
         "mondayComApi": {
           "id": "81ZKNPfmUGTEOCKI",
@@ -334,7 +383,25 @@
       "name": "Create Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4272, 304]
+      "position": [
+        4272,
+        304
+      ]
+    },
+    {
+      "id": "wait-001",
+      "name": "Wait 500ms",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3712,
+        304
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 0.5,
+        "unit": "seconds"
+      }
     },
     {
       "parameters": {},
@@ -342,7 +409,10 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [4496, 304]
+      "position": [
+        4496,
+        304
+      ]
     }
   ],
   "connections": {
@@ -478,7 +548,7 @@
       "main": [
         [
           {
-            "node": "Monday - User Lookup",
+            "node": "Prepare GraphQL Query",
             "type": "main",
             "index": 0
           }
@@ -488,6 +558,17 @@
             "node": "Merge User Data",
             "type": "main",
             "index": 1
+          }
+        ]
+      ]
+    },
+    "Prepare GraphQL Query": {
+      "main": [
+        [
+          {
+            "node": "Monday - User Lookup",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -529,14 +610,25 @@
       "main": [
         [
           {
-            "node": "Monday - Update Item",
+            "node": "Wait 500ms",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Monday - Update Item": {
+    "Wait 500ms": {
+      "main": [
+        [
+          {
+            "node": "Monday - Update Item (GraphQL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monday - Update Item (GraphQL)": {
       "main": [
         [
           {
@@ -564,7 +656,12 @@
     "executionOrder": "v1"
   },
   "staticData": null,
-  "tags": ["monday.com", "ai-tasks", "user-assignment", "email-lookup"],
+  "tags": [
+    "monday.com",
+    "ai-tasks",
+    "user-assignment",
+    "email-lookup"
+  ],
   "triggerCount": 1,
   "updatedAt": "2025-08-06T23:11:24.000Z",
   "versionId": "16eaf82e-9fb6-4c54-a6cb-9baacf3412a3"
