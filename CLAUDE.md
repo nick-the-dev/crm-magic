@@ -186,8 +186,6 @@ mcp__monday-api-mcp__list_workspaces()
 - ✅ AI task generation via OpenRouter
 - ✅ Monday.com task creation
 - ✅ Email-based user assignment
-- ✅ Timeline scheduling for all tasks
-- ✅ Tracked hours documentation in Notes
 - ✅ Webhook trigger system
 - ✅ Error handling and validation
 
@@ -200,14 +198,11 @@ mcp__monday-api-mcp__list_workspaces()
 - **Result**: All 10 tasks now create with owners properly assigned
 
 ### Recent Updates
-- Added timeline support with intelligent scheduling (2025-08-07)
-- Implemented phase-based task scheduling (Planning → Design → Development → Testing → Launch)
-- Added tracked hours documentation in Notes field as workaround
 - Fixed escaped quotes syntax error in owner assignment (2025-08-07)
 - Fixed workflow bottleneck in data merging
 - Implemented AI-only parsing (removed fallback)  
 - Updated all node connections for proper data flow
-- Validated all 10 tasks are created with owners and timelines
+- Validated all 10 tasks are created with owners assigned
 
 ## Development Workflow
 
@@ -281,7 +276,7 @@ mcp__monday-api-mcp__list_workspaces()
 
 ---
 *Last Updated: 2025-08-07*
-*Status: Production Ready - Workflow Fully Functional with Timeline Support*
+*Status: Production Ready - Workflow Fully Functional*
 *Key Learnings:*
 - *Always verify in Monday.com, don't trust workflow execution alone*
 - *NEVER use includeData: true with n8n_list_executions (token limit)*

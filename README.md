@@ -118,10 +118,8 @@ The enhanced workflow includes sophisticated user assignment logic:
 - **Columns**: 
   - `project_owner` (Owner) - User assignment via email lookup
   - `priority_1` (Priority) - High/Medium/Low mapping
-  - `text9` (Notes) - Task descriptions and tracked hours info
+  - `text9` (Notes) - Task descriptions and fallback assignee info
   - `numbers` (Hours Estimate) - Estimated hours from AI
-  - `project_timeline` (Timeline) - Automatic start/end dates for each task
-  - `duration_mktkxg1g` (Time Tracking) - Cannot be set via API (Monday.com limitation)
 
 ## ✅ **TESTED AND WORKING!**
 
