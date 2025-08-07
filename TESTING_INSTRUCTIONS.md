@@ -1,5 +1,45 @@
 # 🧪 Testing & Debugging Instructions
 
+## 🚀 Quick Test (Use This First!)
+
+### Instant Test Command
+```javascript
+// Copy and run this EXACT command with n8n MCP tools:
+mcp__n8n-mcp__n8n_trigger_webhook_workflow({
+  webhookUrl: "https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks",
+  httpMethod: "POST",
+  data: {
+    projectDescription: "Build an AI-powered customer feedback analysis system",
+    boardId: "9744010967",
+    assigneeEmails: "gluknik+1@gmail.com"
+  },
+  waitForResponse: true
+})
+```
+
+**Expected Success Response:**
+```json
+{
+  "success": true,
+  "message": "Successfully created 10 tasks in Monday.com!",
+  "tasksCreated": 10
+}
+```
+
+## 📋 Environment Configuration
+
+### n8n Instance Details
+- **URL**: `https://automations-n8n.u841sv.easypanel.host`
+- **Webhook Endpoint**: `/webhook/monday-tasks`
+- **Full Webhook URL**: `https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks`
+- **Workflow ID**: `6IDxhXNS4X028T1O`
+- **Workflow Name**: "Monday.com AI Tasks Generator - Enhanced"
+
+### Test Parameters (Always Use These)
+- **Board ID**: `9744010967`
+- **Test Email**: `gluknik+1@gmail.com`
+- **Workflow Must Be**: ACTIVE (check with `mcp__n8n-mcp__n8n_list_workflows()`)
+
 ## Complete End-to-End Testing Methodology
 
 ### 1. Initial Setup Verification

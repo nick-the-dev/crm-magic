@@ -7,6 +7,25 @@ Generate 10 realistic project tasks with AI and automatically add them to your M
 - `monday-tasks-generator-enhanced.json` - Enhanced n8n workflow with user assignment
 - `index.html` - Optional external form interface  
 - `README.md` - This file
+- `TESTING_INSTRUCTIONS.md` - Comprehensive testing guide
+- `QUICK_TEST_CHECKLIST.md` - Quick test checklist and commands
+- `test-workflow.js` - Test script with multiple payload options
+
+## 🚀 Quick Test
+
+Run this command with n8n MCP tools:
+```javascript
+mcp__n8n-mcp__n8n_trigger_webhook_workflow({
+  webhookUrl: "https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks",
+  httpMethod: "POST",
+  data: {
+    projectDescription: "Build an AI-powered customer feedback analysis system",
+    boardId: "9744010967",
+    assigneeEmails: "gluknik+1@gmail.com"
+  },
+  waitForResponse: true
+})
+```
 
 ## ⚡ Quick Setup
 
