@@ -32,7 +32,8 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
   data: {
     projectDescription: "Build an AI-powered customer feedback analysis system",
     boardId: "9744010967",
-    assigneeEmails: "gluknik+1@gmail.com"
+    assigneeEmails: "gluknik+1@gmail.com",
+    weeklyHours: 40  // Optional: 20-60 hours, defaults to 40
   },
   waitForResponse: true
 })
@@ -72,7 +73,8 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
   data: {
     projectDescription: "Build an AI-powered customer feedback analysis system",
     boardId: "9744010967",
-    assigneeEmails: "gluknik+1@gmail.com"
+    assigneeEmails: "gluknik+1@gmail.com",
+    weeklyHours: 40  // Optional: 20-60 hours, defaults to 40
   },
   waitForResponse: true
 })
@@ -262,6 +264,27 @@ mcp__github__mark_all_notifications_read()
 - Implemented AI-only parsing (removed fallback)  
 - Updated all node connections for proper data flow
 - Validated all 10 tasks are created with owners assigned
+
+## IMPORTANT: Webhook Form Maintenance
+
+### When Modifying Webhook Input Fields
+**ALWAYS update the HTML test form (index.html) whenever you change webhook inputs:**
+
+1. **Check Webhook Validation**: Review the "Validate Input Data" node in the workflow
+2. **Update Form Fields**: Ensure `index.html` form fields match webhook expectations:
+   - Field names must match exactly (e.g., `weeklyHours` not `totalHours`)
+   - Validation rules must align (min/max values, required fields)
+   - Default values should be consistent
+3. **Update UI Labels**: Make sure descriptions match actual behavior
+4. **Test the Form**: Always test the form after changes to verify it works
+
+### Current Webhook Inputs (as of 2025-08-09)
+- `projectDescription` (required, min 10 chars)
+- `boardId` (required, numbers only)
+- `groupId` (optional)
+- `groupName` (optional)
+- `assigneeEmails` (optional, comma-separated)
+- `weeklyHours` (optional, 20-60, default: 40)
 
 ## Development Workflow
 

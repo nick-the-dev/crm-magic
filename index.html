@@ -206,15 +206,17 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Monday.com Tasks Generator</h1>
-            <p>Generate 10 realistic project tasks with AI and automatically add them to your Monday.com board</p>
+            <p>Generate 3-5 realistic project tasks (38-42 weekly hours) with AI and automatically add them to your Monday.com board</p>
         </div>
         
         <div class="benefits">
             <h3>✨ What you'll get:</h3>
             <ul>
-                <li>• 10 realistic, actionable project tasks</li>
+                <li>• 3-5 realistic project tasks for the week</li>
                 <li>• Natural, human-like task names and descriptions</li>
-                <li>• Smart priority levels and optional time distribution</li>
+                <li>• Smart priority levels (High/Medium/Low)</li>
+                <li>• Dollar amounts ($500-$800 per task)</li>
+                <li>• Time scheduling (single-day tasks, 8 hours each)</li>
                 <li>• Automatic owner assignment via email lookup</li>
                 <li>• Flexible group organization in Monday.com</li>
             </ul>
@@ -279,16 +281,17 @@
             </div>
             
             <div class="form-group">
-                <label for="totalHours">Total Hours Budget (Optional)</label>
+                <label for="weeklyHours">Weekly Hours (Optional)</label>
                 <input 
                     type="number" 
-                    id="totalHours" 
-                    name="totalHours" 
-                    placeholder="e.g., 120"
-                    min="10"
+                    id="weeklyHours" 
+                    name="weeklyHours" 
+                    placeholder="Default: 40 hours"
+                    min="20"
+                    max="60"
                     step="1"
                 />
-                <small>If provided, AI will distribute these hours across all tasks based on complexity. Leave empty for no time estimates.</small>
+                <small>Total weekly hours (20-60). Tasks will be generated to match this budget. Defaults to 40 hours if not specified.</small>
             </div>
             
             <button type="submit" class="submit-btn" id="submitBtn">
@@ -322,7 +325,7 @@
                 groupId: document.getElementById('groupId').value || null,
                 groupName: document.getElementById('groupName').value || null,
                 assigneeEmails: document.getElementById('assigneeEmails').value || null,
-                totalHours: document.getElementById('totalHours').value ? parseFloat(document.getElementById('totalHours').value) : null
+                weeklyHours: document.getElementById('weeklyHours').value ? parseFloat(document.getElementById('weeklyHours').value) : null
             };
             
             // Validate
