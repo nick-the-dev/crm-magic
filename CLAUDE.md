@@ -285,6 +285,7 @@ mcp__github__mark_all_notifications_read()
 - `groupName` (optional)
 - `assigneeEmails` (optional, comma-separated)
 - `weeklyHours` (optional, 20-60, default: 40)
+- `provinces` (optional, comma-separated list of provinces/areas)
 
 ## Development Workflow
 

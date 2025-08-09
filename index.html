@@ -294,6 +294,17 @@
                 <small>Total weekly hours (20-60). Tasks will be generated to match this budget. Defaults to 40 hours if not specified.</small>
             </div>
             
+            <div class="form-group">
+                <label for="provinces">Provinces/Areas (Optional)</label>
+                <input 
+                    type="text" 
+                    id="provinces" 
+                    name="provinces" 
+                    placeholder="e.g., Ontario, Quebec, British Columbia (comma-separated)"
+                />
+                <small>Enter provinces or areas for task assignment. If provided, AI will randomly assign one area to each task.</small>
+            </div>
+            
             <button type="submit" class="submit-btn" id="submitBtn">
                 Generate Tasks 🎯
             </button>
@@ -325,7 +336,8 @@
                 groupId: document.getElementById('groupId').value || null,
                 groupName: document.getElementById('groupName').value || null,
                 assigneeEmails: document.getElementById('assigneeEmails').value || null,
-                weeklyHours: document.getElementById('weeklyHours').value ? parseFloat(document.getElementById('weeklyHours').value) : null
+                weeklyHours: document.getElementById('weeklyHours').value ? parseFloat(document.getElementById('weeklyHours').value) : null,
+                provinces: document.getElementById('provinces').value || null
             };
             
             // Validate
