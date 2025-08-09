@@ -180,6 +180,65 @@ mcp__monday-api-mcp__create_item({
 mcp__monday-api-mcp__list_workspaces()
 ```
 
+### GitHub Tools
+**Available**: GitHub CLI (`gh`) and GitHub MCP server for comprehensive GitHub operations
+
+#### GitHub CLI (gh)
+- Available via Bash tool for repository management, pull requests, issues, etc.
+- Example: `gh pr create`, `gh issue list`, `gh repo clone`
+
+#### GitHub MCP Commands
+```javascript
+// Repository operations
+mcp__github__create_repository({ name: "repo-name", private: false })
+mcp__github__fork_repository({ owner: "owner", repo: "repo" })
+mcp__github__create_branch({ owner: "owner", repo: "repo", branch: "new-branch" })
+
+// Pull requests
+mcp__github__create_pull_request({ 
+  owner: "owner", 
+  repo: "repo", 
+  title: "PR title",
+  head: "feature-branch",
+  base: "main"
+})
+mcp__github__list_pull_requests({ owner: "owner", repo: "repo", state: "open" })
+mcp__github__merge_pull_request({ owner: "owner", repo: "repo", pullNumber: 123 })
+
+// Issues
+mcp__github__create_issue({ 
+  owner: "owner", 
+  repo: "repo", 
+  title: "Issue title", 
+  body: "Description" 
+})
+mcp__github__list_issues({ owner: "owner", repo: "repo", state: "OPEN" })
+
+// File operations
+mcp__github__get_file_contents({ owner: "owner", repo: "repo", path: "file.txt" })
+mcp__github__create_or_update_file({ 
+  owner: "owner", 
+  repo: "repo", 
+  path: "file.txt",
+  content: "content",
+  message: "Update file",
+  branch: "main"
+})
+
+// Workflow operations
+mcp__github__list_workflows({ owner: "owner", repo: "repo" })
+mcp__github__run_workflow({ 
+  owner: "owner", 
+  repo: "repo", 
+  workflow_id: "ci.yml", 
+  ref: "main" 
+})
+
+// Notifications
+mcp__github__list_notifications({ filter: "default" })
+mcp__github__mark_all_notifications_read()
+```
+
 ## Current Project Status
 
 ### Working Features
@@ -275,9 +334,11 @@ mcp__monday-api-mcp__list_workspaces()
 5. Monitor API responses
 
 ---
-*Last Updated: 2025-08-07*
+*Last Updated: 2025-08-09*
 *Status: Production Ready - Workflow Fully Functional*
 *Key Learnings:*
 - *Always verify in Monday.com, don't trust workflow execution alone*
 - *NEVER use includeData: true with n8n_list_executions (token limit)*
 - *ALWAYS update local files → n8n → GitHub (in that order)*
+*Recent Updates:*
+- *Added GitHub CLI and GitHub MCP server documentation (2025-08-09)*
