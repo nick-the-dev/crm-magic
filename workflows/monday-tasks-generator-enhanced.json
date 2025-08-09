@@ -1,5 +1,5 @@
 {
-  "name": "Monday.com AI Tasks Generator - Simplified Owner Assignment",
+  "name": "Monday.com AI Tasks Generator - Enhanced v2",
   "nodes": [
     {
       "parameters": {
@@ -13,8 +13,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [240, 304],
-      "webhookId": "monday-tasks-webhook",
-      "onError": "continueRegularOutput"
+      "webhookId": "monday-tasks-webhook"
     },
     {
       "parameters": {
@@ -82,7 +81,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse AI response - AI only, no fallback\nconst validatedData = $('Validate Input Data').item.json;\nlet tasks = [];\nlet aiGroupName = null;\n\n// Extract AI response\nconst aiResponse = $json.choices[0].message.content;\nconsole.log('AI Response:', aiResponse);\n\n// Find JSON in the AI response\nconst jsonMatch = aiResponse.match(/{[\\s\\S]*}/s);\nif (!jsonMatch) {\n  throw new Error('No JSON found in AI response');\n}\n\nconst aiData = JSON.parse(jsonMatch[0]);\nconsole.log('Parsed AI data:', JSON.stringify(aiData));\n\nif (!aiData.tasks || !Array.isArray(aiData.tasks) || aiData.tasks.length === 0) {\n  throw new Error('AI did not return valid tasks array');\n}\n\ntasks = aiData.tasks.slice(0, 10);\naiGroupName = aiData.groupName || 'AI Tasks';\n\n// Generate tracked hours if not provided by AI (for fallback or when hours aren't requested)\ntasks = tasks.map(task => {\n  if (task.estimatedHours && !task.trackedHours) {\n    // Generate realistic tracked hours between 30-90% of estimated\n    const percentComplete = 0.3 + Math.random() * 0.6; // 30% to 90%\n    task.trackedHours = Math.round(task.estimatedHours * percentComplete * 10) / 10; // Round to 1 decimal\n  } else if (!task.estimatedHours) {\n    // If no estimated hours, generate some realistic tracked hours (2-15 hours)\n    task.trackedHours = Math.round((2 + Math.random() * 13) * 10) / 10;\n  }\n  return task;\n});\n\n// If we have assignee emails, assign them to tasks\nif (validatedData.assigneeEmails && validatedData.assigneeEmails.length > 0) {\n  tasks = tasks.map((task, index) => {\n    const assigneeIndex = index % validatedData.assigneeEmails.length;\n    return {\n      ...task,\n      assignee: validatedData.assigneeEmails[assigneeIndex]\n    };\n  });\n}\n\nreturn [{\n  json: {\n    tasks: tasks,\n    projectDescription: validatedData.projectDescription,\n    boardId: validatedData.boardId,\n    groupId: validatedData.groupId,\n    groupName: validatedData.groupName,\n    aiGroupName: aiGroupName,\n    assigneeEmails: validatedData.assigneeEmails,\n    totalHours: validatedData.totalHours,\n    aiUsed: true,\n    tasksCount: tasks.length\n  }\n}];"
+        "jsCode": "// Parse AI response - AI only, no fallback\nconst validatedData = $('Validate Input Data').item.json;\nlet tasks = [];\nlet aiGroupName = null;\n\n// Extract AI response\nconst aiResponse = $json.choices[0].message.content;\nconsole.log('AI Response:', aiResponse);\n\n// Find JSON in the AI response\nconst jsonMatch = aiResponse.match(/{[\\s\\S]*}/s);\nif (!jsonMatch) {\n  throw new Error('No JSON found in AI response');\n}\n\nconst aiData = JSON.parse(jsonMatch[0]);\nconsole.log('Parsed AI data:', JSON.stringify(aiData));\n\nif (!aiData.tasks || !Array.isArray(aiData.tasks) || aiData.tasks.length === 0) {\n  throw new Error('AI did not return valid tasks array');\n}\n\ntasks = aiData.tasks.slice(0, 10);\naiGroupName = aiData.groupName || 'AI Tasks';\n\n// Ensure all tasks have trackedHours\ntasks = tasks.map(task => {\n  if (!task.trackedHours) {\n    if (task.estimatedHours) {\n      // Generate realistic tracked hours between 30-90% of estimated\n      const percentComplete = 0.3 + Math.random() * 0.6; // 30% to 90%\n      task.trackedHours = Math.round(task.estimatedHours * percentComplete * 10) / 10; // Round to 1 decimal\n    } else {\n      // If no estimated hours, generate some realistic tracked hours (2-15 hours)\n      task.trackedHours = Math.round((2 + Math.random() * 13) * 10) / 10;\n    }\n  }\n  return task;\n});\n\n// If we have assignee emails, assign them to tasks\nif (validatedData.assigneeEmails && validatedData.assigneeEmails.length > 0) {\n  tasks = tasks.map((task, index) => {\n    const assigneeIndex = index % validatedData.assigneeEmails.length;\n    return {\n      ...task,\n      assignee: validatedData.assigneeEmails[assigneeIndex]\n    };\n  });\n}\n\nreturn [{\n  json: {\n    tasks: tasks,\n    projectDescription: validatedData.projectDescription,\n    boardId: validatedData.boardId,\n    groupId: validatedData.groupId,\n    groupName: validatedData.groupName,\n    aiGroupName: aiGroupName,\n    assigneeEmails: validatedData.assigneeEmails,\n    totalHours: validatedData.totalHours,\n    aiUsed: true,\n    tasksCount: tasks.length\n  }\n}];"
       },
       "id": "parse-001",
       "name": "Parse AI Tasks",
@@ -193,7 +192,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Prepare item creation with ALL fields including owner and time tracking\nconst data = $json;\nconst task = data.task || {};\nconst ownerId = data.ownerId;\n\nconsole.log('=== PREPARING ITEM WITH OWNER AND TIME TRACKING ===');\nconsole.log('Task:', task.title);\nconsole.log('Owner ID:', ownerId);\nconsole.log('Estimated Hours:', task.estimatedHours);\nconsole.log('Tracked Hours:', task.trackedHours);\n\n// Build column values for additional fields\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n}\n\n// Add priority\nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  const priorityKey = task.priority.toLowerCase();\n  columnValues.priority_1 = priorityMap[priorityKey] || priorityMap['medium'];\n}\n\n// Add owner ID if we have it\nif (ownerId) {\n  const ownerValue = {\n    personsAndTeams: [\n      {\n        id: parseInt(ownerId),\n        kind: \"person\"\n      }\n    ]\n  };\n  columnValues.project_owner = ownerValue;\n  console.log('✅ Setting owner with ID:', ownerId);\n}\n\n// Add estimated hours (always add if provided)\nif (task.estimatedHours !== undefined && task.estimatedHours !== null) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('✅ Setting estimated hours:', task.estimatedHours);\n}\n\n// Add time tracking if we have tracked hours\nif (task.trackedHours && task.trackedHours > 0) {\n  // Convert hours to seconds for time_tracking column\n  const trackedSeconds = Math.round(task.trackedHours * 3600);\n  // Monday.com expects a simple object with duration in seconds\n  // columnValues.duration_mktkxg1g = trackedSeconds.toString(); // API doesn't support time_tracking columns\n  console.log('⚠️ Time tracking generated:', task.trackedHours, 'hours (', trackedSeconds, 'seconds) - Cannot set via API due to Monday.com limitation');\n}\n\nconsole.log('Column values to set:', JSON.stringify(columnValues, null, 2));\n\nreturn {\n  json: {\n    ...data,\n    columnValues: columnValues,\n    columnValuesString: JSON.stringify(columnValues)\n  }\n};"
+        "jsCode": "// Prepare item creation with ALL fields including owner\nconst data = $json;\nconst task = data.task || {};\nconst ownerId = data.ownerId;\n\nconsole.log('=== PREPARING ITEM WITH OWNER ===');\nconsole.log('Task:', task.title);\nconsole.log('Owner ID:', ownerId);\nconsole.log('Estimated Hours:', task.estimatedHours);\nconsole.log('Tracked Hours (AI generated):', task.trackedHours);\n\n// Build column values for additional fields\nconst columnValues = {};\n\n// Add description to Notes column\nif (task.description) {\n  columnValues.text9 = task.description.substring(0, 255);\n}\n\n// Add priority\nif (task.priority) {\n  const priorityMap = {\n    'high': { index: 110, label: 'High' },\n    'medium': { index: 109, label: 'Medium' },\n    'low': { index: 7, label: 'Low' }\n  };\n  const priorityKey = task.priority.toLowerCase();\n  columnValues.priority_1 = priorityMap[priorityKey] || priorityMap['medium'];\n}\n\n// Add owner ID if we have it\nif (ownerId) {\n  const ownerValue = {\n    personsAndTeams: [\n      {\n        id: parseInt(ownerId),\n        kind: \"person\"\n      }\n    ]\n  };\n  columnValues.project_owner = ownerValue;\n  console.log('✅ Setting owner with ID:', ownerId);\n}\n\n// Add estimated hours (always add if provided)\nif (task.estimatedHours !== undefined && task.estimatedHours !== null) {\n  columnValues.numbers = task.estimatedHours.toString();\n  console.log('✅ Setting estimated hours:', task.estimatedHours);\n}\n\n// NOTE: Time tracking (duration_mktkxg1g) cannot be set via API\n// Monday.com API limitation: \"This column type is not supported yet in the API\"\n// The AI generates trackedHours but we cannot apply them to the time_tracking column\nif (task.trackedHours && task.trackedHours > 0) {\n  console.log('⚠️ Time tracking hours generated by AI:', task.trackedHours, 'hours');\n  console.log('   (Cannot be set via API due to Monday.com limitation)');\n}\n\nconsole.log('Column values to set:', JSON.stringify(columnValues, null, 2));\n\nreturn {\n  json: {\n    ...data,\n    columnValues: columnValues,\n    columnValuesString: JSON.stringify(columnValues)\n  }\n};"
       },
       "id": "prep-item-with-owner",
       "name": "Prep Item With Owner",
@@ -225,7 +224,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = $input.all();\nconst summary = {\n  success: true,\n  message: 'Successfully created ' + results.length + ' tasks in Monday.com with owners assigned!',\n  tasksCreated: results.length,\n  boardId: results[0] ? results[0].json.boardId : null,\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
+        "jsCode": "const results = $input.all();\nconst summary = {\n  success: true,\n  message: 'Successfully created ' + results.length + ' tasks in Monday.com!',\n  tasksCreated: results.length,\n  boardId: results[0] ? results[0].json.boardId : null,\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
       },
       "id": "summary",
       "name": "Create Summary",
@@ -239,175 +238,54 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3152, 304],
-      "onError": "continueRegularOutput"
+      "position": [3152, 304]
     }
   ],
   "connections": {
     "Webhook - Project Input": {
-      "main": [
-        [
-          {
-            "node": "Validate Input Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Validate Input Data", "type": "main", "index": 0}]]
     },
     "Validate Input Data": {
-      "main": [
-        [
-          {
-            "node": "AI - Generate Tasks",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "AI - Generate Tasks", "type": "main", "index": 0}]]
     },
     "AI - Generate Tasks": {
-      "main": [
-        [
-          {
-            "node": "Parse AI Tasks",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Parse AI Tasks", "type": "main", "index": 0}]]
     },
     "Parse AI Tasks": {
-      "main": [
-        [
-          {
-            "node": "Prepare Bulk User Lookup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Prepare Bulk User Lookup", "type": "main", "index": 0}]]
     },
     "Prepare Bulk User Lookup": {
-      "main": [
-        [
-          {
-            "node": "Monday - Bulk User Lookup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Monday - Bulk User Lookup", "type": "main", "index": 0}]]
     },
     "Monday - Bulk User Lookup": {
-      "main": [
-        [
-          {
-            "node": "Process Bulk Lookup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Process Bulk Lookup", "type": "main", "index": 0}]]
     },
     "Process Bulk Lookup": {
-      "main": [
-        [
-          {
-            "node": "IF - Group Exists",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "IF - Group Exists", "type": "main", "index": 0}]]
     },
     "IF - Group Exists": {
       "main": [
-        [
-          {
-            "node": "Split Tasks With Owners",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Monday - Create Group",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{"node": "Split Tasks With Owners", "type": "main", "index": 0}],
+        [{"node": "Monday - Create Group", "type": "main", "index": 0}]
       ]
     },
     "Monday - Create Group": {
-      "main": [
-        [
-          {
-            "node": "Split Tasks With Owners",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Split Tasks With Owners", "type": "main", "index": 0}]]
     },
     "Split Tasks With Owners": {
-      "main": [
-        [
-          {
-            "node": "Prep Item With Owner",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Prep Item With Owner", "type": "main", "index": 0}]]
     },
     "Prep Item With Owner": {
-      "main": [
-        [
-          {
-            "node": "Monday - Create Item With Owner",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Monday - Create Item With Owner", "type": "main", "index": 0}]]
     },
     "Monday - Create Item With Owner": {
-      "main": [
-        [
-          {
-            "node": "Create Summary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Create Summary", "type": "main", "index": 0}]]
     },
     "Create Summary": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
     }
   },
   "settings": {
     "executionOrder": "v1"
-  },
-  "staticData": null,
-  "tags": [
-    "monday.com",
-    "ai-tasks",
-    "user-assignment",
-    "email-lookup",
-    "owner-during-creation",
-    "simplified-flow"
-  ],
-  "triggerCount": 1,
-  "updatedAt": "2025-08-07T05:00:00.000Z",
-  "versionId": "simplified-owner-assignment"
+  }
 }
