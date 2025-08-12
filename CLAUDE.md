@@ -257,7 +257,16 @@ mcp__github__mark_all_notifications_read()
 - ✅ Webhook trigger system with validation
 - ✅ Group creation and management
 
-### Recent Updates (2025-08-09)
+### Recent Updates (2025-08-12)
+- Deployed Telegram bot to DigitalOcean App Platform
+- Fixed build command to use yarn instead of npm
+- Removed placeholder environment variables that caused runtime errors
+- Added detailed task display in bot confirmation messages (priorities, hours, amounts, areas)
+- Configured auto-deploy on GitHub push to main branch
+- Cleaned up old droplet-based deployment infrastructure
+- App Platform URL: https://telegram-crm-bot-pfyvn.ondigitalocean.app
+
+### Previous Updates (2025-08-09)
 - Added Province/Area field for city-based task distribution
 - Fixed provinces to assign cities instead of province names
 - Added Amount column ($500-800 per task)
@@ -370,6 +379,7 @@ yarn start
 ### API Endpoints
 - Webhook: `https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks`
 - n8n API: `https://automations-n8n.u841sv.easypanel.host/api/v1`
+- Telegram Bot: https://telegram-crm-bot-pfyvn.ondigitalocean.app
 
 ### Credentials
 - OpenRouter: "OpenRouter account" credential

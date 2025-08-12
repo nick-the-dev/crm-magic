@@ -74,6 +74,29 @@ crm-magic/
 | groupId | No | Existing group ID |
 | groupName | No | Custom group name |
 
+## 🤖 Telegram Bot
+
+The project includes a Telegram bot for remote task generation:
+- **Bot Username**: @CRMTaskGeneratorBot
+- **Commands**: `/tasks` - Interactive task creation workflow
+- **Authentication**: Password-protected with 30-day sessions
+- **Deployment**: DigitalOcean App Platform (auto-deploy on push)
+
+## 🚢 Deployment
+
+### Telegram Bot (DigitalOcean App Platform)
+- **App Name**: telegram-crm-bot
+- **Region**: NYC
+- **URL**: https://telegram-crm-bot-pfyvn.ondigitalocean.app
+- **Auto-deploy**: Enabled (deploys on push to main branch)
+- **Build**: Yarn 4.2.2 with TypeScript compilation
+- **Runtime**: Node.js 22.x
+
+### n8n Workflow
+- **Instance**: https://automations-n8n.u841sv.easypanel.host
+- **Workflow ID**: ixbSnRIIcxZnJVjR
+- **Webhook**: `/webhook/monday-tasks`
+
 ## ✅ Production Ready
 
 Successfully tested with:
@@ -82,6 +105,8 @@ Successfully tested with:
 - Email-based user assignment
 - Province-based city distribution
 - Full column mapping (priority, dates, amount, area)
+- Telegram bot with detailed task confirmation
+- DigitalOcean App Platform deployment
 
 ---
-*Last Updated: 2025-08-09*
+*Last Updated: 2025-08-12*
