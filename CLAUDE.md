@@ -6,19 +6,18 @@ This is a Monday.com CRM automation project that uses n8n workflows to generate 
 ## Project Structure
 ```
 crm-magic/
-├── .claude/                     # Claude Code configuration
-│   └── commands/                # Custom slash commands
-├── docs/                        # Documentation
-│   ├── testing/
-│   │   ├── testing-instructions.md  # Comprehensive testing guide
-│   │   └── quick-test-checklist.md  # Quick test reference
-│   └── workflows/              # Workflow documentation
-├── workflows/                   # n8n workflow files
+├── .claude/                    # Claude Code configuration
+│   ├── commands/               # Custom slash commands
+│   └── n8n_workflow_instructions.md
+├── docs/                       
+│   └── TESTING.md             # Consolidated testing guide
+├── workflows/                  # n8n workflow files
 │   └── monday-tasks-generator-enhanced.json
-├── test/                       # Test files
+├── test/                      # Test files
 │   └── test-workflow.js
-├── README.md                   # Project overview
-└── CLAUDE.md                   # This file - Claude instructions
+├── index.html                 # Web form interface
+├── README.md                  # Project overview
+└── CLAUDE.md                  # This file - Claude instructions
 ```
 
 ## Key Commands & Scripts
@@ -81,11 +80,11 @@ mcp__n8n-mcp__n8n_trigger_webhook_workflow({
 ```
 
 ### Verification Checklist (DO ALL OF THESE)
-- [ ] Workflow returns `{"success": true, "tasksCreated": 10}`
+- [ ] Workflow returns `{"success": true, "tasksCreated": 3-5}`
 - [ ] Check Monday.com board 9744010967 for new tasks
 - [ ] Verify "Nick T" appears in Owner column for all tasks
 - [ ] Confirm group was created (check group name)
-- [ ] Check priority, hours, description are populated
+- [ ] Check priority, hours, description, amount, area are populated
 
 ### Common Pitfall: Escaped Quotes in Code Nodes
 Watch for `\"person\"` vs `"person"` in JavaScript within JSON. This single issue blocked task creation for multiple attempts.
@@ -244,26 +243,22 @@ mcp__github__mark_all_notifications_read()
 ## Current Project Status
 
 ### Working Features
-- ✅ AI task generation via OpenRouter
-- ✅ Monday.com task creation
+- ✅ AI task generation via OpenRouter (3-5 tasks, 38-42 weekly hours)
+- ✅ Monday.com task creation with full column mapping
 - ✅ Email-based user assignment
-- ✅ Webhook trigger system
-- ✅ Error handling and validation
+- ✅ Province-based city assignment (e.g., Ontario → Toronto, Hamilton, etc.)
+- ✅ Dollar amounts ($500-800 per task)
+- ✅ Start/End dates with times (6-10 AM EST start times)
+- ✅ Webhook trigger system with validation
+- ✅ Group creation and management
 
-### Known Issues  
-- None currently - workflow is production ready
-
-### Critical Fix Applied (2025-08-07)
-- **Issue**: Tasks weren't being created due to escaped quotes syntax error
-- **Solution**: Fixed `kind: \"person\"` to `kind: "person"` in Prep Item With Owner node
-- **Result**: All 10 tasks now create with owners properly assigned
-
-### Recent Updates
-- Fixed escaped quotes syntax error in owner assignment (2025-08-07)
-- Fixed workflow bottleneck in data merging
-- Implemented AI-only parsing (removed fallback)  
-- Updated all node connections for proper data flow
-- Validated all 10 tasks are created with owners assigned
+### Recent Updates (2025-08-09)
+- Added Province/Area field for city-based task distribution
+- Fixed provinces to assign cities instead of province names
+- Added Amount column ($500-800 per task)
+- Fixed webhook form field mismatch (totalHours → weeklyHours)
+- Updated to generate 3-5 tasks (was 10) for more realistic sprints
+- Consolidated documentation for better organization
 
 ## IMPORTANT: Webhook Form Maintenance
 
@@ -324,9 +319,8 @@ mcp__github__mark_all_notifications_read()
 ### File Locations
 - Main workflow: `workflows/monday-tasks-generator-enhanced.json`
 - Test script: `test/test-workflow.js`
-- Testing docs: `docs/testing/testing-instructions.md`
-- Quick tests: `docs/testing/quick-test-checklist.md`
-- **SOLUTION DOC**: `docs/testing/SOLUTION-OWNER-ASSIGNMENT.md` (READ THIS!)
+- Testing guide: `docs/TESTING.md`
+- Web form: `index.html`
 
 ### API Endpoints
 - Webhook: `https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks`
@@ -360,9 +354,3 @@ mcp__github__mark_all_notifications_read()
 ---
 *Last Updated: 2025-08-09*
 *Status: Production Ready - Workflow Fully Functional*
-*Key Learnings:*
-- *Always verify in Monday.com, don't trust workflow execution alone*
-- *NEVER use includeData: true with n8n_list_executions (token limit)*
-- *ALWAYS update local files → n8n → GitHub (in that order)*
-*Recent Updates:*
-- *Added GitHub CLI and GitHub MCP server documentation (2025-08-09)*

@@ -12,7 +12,7 @@
 // Configuration
 const CONFIG = {
   webhookUrl: "https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks",
-  workflowId: "6IDxhXNS4X028T1O",
+  workflowId: "ixbSnRIIcxZnJVjR",
   boardId: "9744010967",
   testEmail: "gluknik+1@gmail.com"
 };
@@ -22,22 +22,30 @@ const TEST_PAYLOADS = {
   default: {
     projectDescription: "Build an AI-powered customer feedback analysis system that automatically categorizes and prioritizes customer feedback",
     boardId: CONFIG.boardId,
-    assigneeEmails: CONFIG.testEmail
+    assigneeEmails: CONFIG.testEmail,
+    weeklyHours: 40,
+    provinces: "Ontario"
   },
   ecommerce: {
     projectDescription: "Create a responsive e-commerce website with payment integration, inventory management, and customer analytics",
     boardId: CONFIG.boardId,
-    assigneeEmails: CONFIG.testEmail
+    assigneeEmails: CONFIG.testEmail,
+    weeklyHours: 40,
+    provinces: "Quebec"
   },
   mobile: {
     projectDescription: "Develop a fitness tracking mobile app for iOS and Android with social features and wearable integration",
     boardId: CONFIG.boardId,
-    assigneeEmails: CONFIG.testEmail
+    assigneeEmails: CONFIG.testEmail,
+    weeklyHours: 40,
+    provinces: "British Columbia"
   },
   data: {
     projectDescription: "Build a real-time analytics dashboard for sales performance with predictive modeling and alerts",
     boardId: CONFIG.boardId,
-    assigneeEmails: CONFIG.testEmail
+    assigneeEmails: CONFIG.testEmail,
+    weeklyHours: 40,
+    provinces: "Alberta"
   }
 };
 
