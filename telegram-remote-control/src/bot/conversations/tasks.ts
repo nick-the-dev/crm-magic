@@ -162,13 +162,48 @@ export async function tasksConversation(
     }
 
     const result = response.data
+    
+    // Build task list display
+    let taskListDisplay = ''
+    if (result.tasks && Array.isArray(result.tasks)) {
+      taskListDisplay = '\n\n📋 *Tasks Created:*\n'
+      result.tasks.forEach((task, index) => {
+        const priority = task.priority ? ` [${task.priority.toUpperCase()}]` : ''
+        const hours = task.hoursAllocated ? ` (${task.hoursAllocated}h)` : ''
+        const assignee = task.assignee && task.assignee !== 'Unassigned' ? ` → ${task.assignee}` : ''
+        const amount = task.amount ? ` $${task.amount}` : ''
+        const area = task.area ? ` 📍${task.area}` : ''
+        
+        taskListDisplay += `\n${index + 1}. *${task.title}*${priority}${hours}${amount}${area}${assignee}`
+        
+        if (task.startDate && task.endDate) {
+          const startTime = task.startDate.split(' ')[1] || ''
+          const endTime = task.endDate.split(' ')[1] || ''
+          if (startTime && endTime) {
+            taskListDisplay += `\n   ⏰ ${startTime} - ${endTime} EST`
+          }
+        }
+      })
+      
+      // Calculate total hours
+      const totalHours = result.tasks.reduce((sum, task) => sum + (task.hoursAllocated || 0), 0)
+      const totalAmount = result.tasks.reduce((sum, task) => sum + (task.amount || 0), 0)
+      
+      taskListDisplay += `\n\n📊 *Summary:*`
+      taskListDisplay += `\n• Total Tasks: ${result.tasksCreated}`
+      taskListDisplay += `\n• Total Hours: ${totalHours}/${collectedData.weeklyHours}`
+      if (totalAmount > 0) {
+        taskListDisplay += `\n• Total Amount: $${totalAmount}`
+      }
+    }
+    
     await ctx.reply(
-      `✅ *Success!*\n\n` +
-      `Created ${result.tasksCreated || 'multiple'} tasks\n` +
+      `✅ *Task Generation Complete!*\n\n` +
       `Board: ${collectedData.boardId}\n` +
       `${collectedData.groupName ? `Group: ${collectedData.groupName}\n` : ''}` +
       `${collectedData.assigneeEmails ? `Assigned to: ${collectedData.assigneeEmails}\n` : ''}` +
-      `\nUse /status to check workflow execution details.`,
+      taskListDisplay +
+      `\n\n✨ All tasks have been successfully created in Monday.com!`,
       { parse_mode: 'Markdown' }
     )
   } catch (error) {

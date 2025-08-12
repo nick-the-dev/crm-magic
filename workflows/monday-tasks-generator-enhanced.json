@@ -224,7 +224,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = $input.all();\nconst summary = {\n  success: true,\n  message: 'Successfully created ' + results.length + ' tasks for this week in Monday.com!',\n  tasksCreated: results.length,\n  boardId: results[0] ? results[0].json.boardId : null,\n  weeklyHours: results[0] ? results[0].json.weeklyHours : 40,\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
+        "jsCode": "const results = $input.all();\n\n// Get the original task data from the Prep Item node output\n// The Monday Create Item node doesn't return the original task data\n// So we need to get it from the input to the Create Item node\nconst prepItemResults = $('Prep Item With Owner').all();\n\n// Extract task details from the prep data (which has all the task info)\nconst taskList = prepItemResults.map((item, index) => {\n  const task = item.json.task || {};\n  return {\n    title: task.title || 'Untitled Task',\n    priority: task.priority || 'medium',\n    hoursAllocated: task.hoursAllocated || 0,\n    assignee: task.assignee || 'Unassigned',\n    description: task.description || '',\n    startDate: task.startDate || '',\n    endDate: task.endDate || '',\n    amount: task.amount || 0,\n    area: task.area || ''\n  };\n});\n\nconst summary = {\n  success: true,\n  message: 'Successfully created ' + results.length + ' tasks for this week in Monday.com!',\n  tasksCreated: results.length,\n  boardId: prepItemResults[0] ? prepItemResults[0].json.boardId : null,\n  weeklyHours: prepItemResults[0] ? prepItemResults[0].json.weeklyHours : 40,\n  tasks: taskList,\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
       },
       "id": "summary",
       "name": "Create Summary",
