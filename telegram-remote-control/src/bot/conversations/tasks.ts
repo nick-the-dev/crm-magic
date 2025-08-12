@@ -167,7 +167,7 @@ export async function tasksConversation(
     let taskListDisplay = ''
     if (result.tasks && Array.isArray(result.tasks)) {
       taskListDisplay = '\n\n📋 *Tasks Created:*\n'
-      result.tasks.forEach((task, index) => {
+      result.tasks.forEach((task: any, index: number) => {
         const priority = task.priority ? ` [${task.priority.toUpperCase()}]` : ''
         const hours = task.hoursAllocated ? ` (${task.hoursAllocated}h)` : ''
         const assignee = task.assignee && task.assignee !== 'Unassigned' ? ` → ${task.assignee}` : ''
@@ -186,8 +186,8 @@ export async function tasksConversation(
       })
       
       // Calculate total hours
-      const totalHours = result.tasks.reduce((sum, task) => sum + (task.hoursAllocated || 0), 0)
-      const totalAmount = result.tasks.reduce((sum, task) => sum + (task.amount || 0), 0)
+      const totalHours = result.tasks.reduce((sum: number, task: any) => sum + (task.hoursAllocated || 0), 0)
+      const totalAmount = result.tasks.reduce((sum: number, task: any) => sum + (task.amount || 0), 0)
       
       taskListDisplay += `\n\n📊 *Summary:*`
       taskListDisplay += `\n• Total Tasks: ${result.tasksCreated}`
