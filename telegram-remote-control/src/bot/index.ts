@@ -37,18 +37,22 @@ bot.catch((err) => {
 
 bot.use(commandLogger)
 
+// Commands that don't require authentication
 bot.command('start', startCommand)
-bot.command('help', helpCommand)
 
+// Apply auth middleware
 bot.use(authMiddleware)
 
-bot.command('tasks', async (ctx: any) => {
+// Commands that require authentication
+bot.command('help', helpCommand)
+bot.command('generate_tasks', async (ctx: any) => {
   await ctx.conversation.enter('tasksConversation')
 })
 bot.command('status', statusCommand)
 bot.command('deploy', deployCommand)
 bot.command('webhook', webhookCommand)
 
+// Fallback for unknown messages
 bot.on('message', async (ctx) => {
   if (ctx.session.awaitingPassword) {
     return

@@ -136,7 +136,7 @@ export async function tasksConversation(
         .insert({
           user_id: ctx.session.userId,
           telegram_chat_id: ctx.chat?.id,
-          command: '/tasks',
+          command: '/generate_tasks',
           collected_data: collectedData,
           completed: true
         })
@@ -145,7 +145,7 @@ export async function tasksConversation(
         .from('command_logs')
         .insert({
           user_id: ctx.session.userId,
-          command: '/tasks',
+          command: '/generate_tasks',
           parameters: collectedData,
           result: response.data,
           success: true
@@ -170,7 +170,7 @@ export async function tasksConversation(
         .from('command_logs')
         .insert({
           user_id: ctx.session.userId,
-          command: '/tasks',
+          command: '/generate_tasks',
           parameters: collectedData,
           result: { error: error instanceof Error ? error.message : 'Unknown error' },
           success: false

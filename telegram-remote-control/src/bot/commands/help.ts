@@ -5,12 +5,12 @@ export async function helpCommand(ctx: MyContext) {
 📚 *Available Commands*
 
 *Task Management*
-/tasks - Create Monday.com tasks with guided flow
+/generate_tasks - Create Monday.com tasks with AI
 
 *System Control*
 /status - Check system and workflow status
 /deploy - Deploy applications
-/webhook \[name\] - Trigger custom webhooks
+/webhook - Trigger custom webhooks
 
 *Utility*
 /help - Show this help message

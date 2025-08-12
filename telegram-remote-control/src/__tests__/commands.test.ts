@@ -54,7 +54,7 @@ describe('Bot Commands', () => {
       const commands = [
         '/start - Start the bot',
         '/help - Show this help message',
-        '/tasks - Create Monday.com tasks',
+        '/generate_tasks - Create Monday.com tasks with AI',
         '/status - Check workflow status',
         '/deploy - Deploy application',
         '/webhook - Manage webhooks'
@@ -67,7 +67,7 @@ describe('Bot Commands', () => {
     })
   })
 
-  describe('/tasks command', () => {
+  describe('/generate_tasks command', () => {
     it('should require authentication', () => {
       const isAuthenticated = mockContext.session?.isAuthenticated || false
       
