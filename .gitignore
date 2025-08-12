@@ -1,0 +1,6 @@
+.mcp.json
+.DS_Store
+telegram-remote-control/node_modules/
+telegram-remote-control/dist/
+telegram-remote-control/.env
+telegram-remote-control/*.log

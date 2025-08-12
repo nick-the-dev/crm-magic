@@ -13,6 +13,13 @@ crm-magic/
 │   └── TESTING.md             # Consolidated testing guide
 ├── workflows/                  # n8n workflow files
 │   └── monday-tasks-generator-enhanced.json
+├── telegram-remote-control/   # Telegram bot for remote control
+│   ├── src/
+│   │   ├── bot/              # Bot commands and middleware
+│   │   ├── helpers/          # Supabase and env config
+│   │   └── server.ts         # Main entry point
+│   ├── scripts/              # User and integration management
+│   └── README.md             # Bot documentation
 ├── index.html                 # Web form interface
 ├── README.md                  # Project overview
 └── CLAUDE.md                  # This file - Claude instructions
@@ -312,12 +319,53 @@ mcp__github__mark_all_notifications_read()
 - Implement rate limiting where appropriate
 - Log security-relevant events
 
+## Telegram Remote Control Bot
+
+### Overview
+A secure Telegram bot that provides remote control for n8n workflows and other applications. Features conversational commands, password authentication, and 30-day session persistence.
+
+### Bot Setup
+```bash
+cd telegram-remote-control
+yarn install
+cp .env.example .env
+# Edit .env with your credentials
+
+# Add a user (find your Telegram ID via @userinfobot)
+yarn add-user <telegram_id> <username> <password>
+
+# Start the bot
+yarn start
+```
+
+### Bot Commands
+- `/tasks` - Interactive Monday.com task creation
+- `/status` - System and workflow status
+- `/webhook [name]` - Trigger custom webhooks
+- `/deploy` - Deployment control (coming soon)
+- `/help` - Show available commands
+
+### Database Tables (Supabase)
+- `telegram_users` - Authorized users (manual management)
+- `telegram_sessions` - Active sessions (30-day expiry)
+- `command_states` - Multi-step conversation tracking
+- `command_logs` - Command history and audit trail
+- `app_integrations` - Webhook configurations
+
+### Security Features
+- Manual user registration only (no self-signup)
+- Password authentication on first use
+- 30-day session persistence
+- Complete command logging
+- Telegram ID whitelist
+
 ## Quick Reference
 
 ### File Locations
 - Main workflow: `workflows/monday-tasks-generator-enhanced.json`
 - Testing guide: `docs/TESTING.md`
 - Web form: `index.html`
+- Telegram bot: `telegram-remote-control/`
 
 ### API Endpoints
 - Webhook: `https://automations-n8n.u841sv.easypanel.host/webhook/monday-tasks`
@@ -326,6 +374,8 @@ mcp__github__mark_all_notifications_read()
 ### Credentials
 - OpenRouter: "OpenRouter account" credential
 - Monday.com: "Monday.com account" (ID: 81ZKNPfmUGTEOCKI)
+- Telegram Bot: Token from @BotFather
+- Supabase: Service role key required
 
 ## Tips from User Feedback
 
@@ -349,5 +399,5 @@ mcp__github__mark_all_notifications_read()
 5. Monitor API responses
 
 ---
-*Last Updated: 2025-08-09*
-*Status: Production Ready - Workflow Fully Functional*
+*Last Updated: 2025-08-12*
+*Status: Production Ready - Workflow & Telegram Bot Fully Functional*
