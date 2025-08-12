@@ -9,7 +9,6 @@ export async function helpCommand(ctx: MyContext) {
 
 *System Control*
 /status \\- Check system and workflow status
-/deploy \\- Deploy applications
 /webhook \\- Trigger custom webhooks
 
 *Utility*

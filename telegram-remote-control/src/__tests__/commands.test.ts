@@ -56,11 +56,10 @@ describe('Bot Commands', () => {
         '/help - Show this help message',
         '/generate_tasks - Create Monday.com tasks with AI',
         '/status - Check workflow status',
-        '/deploy - Deploy application',
         '/webhook - Manage webhooks'
       ]
       
-      expect(commands).toHaveLength(6)
+      expect(commands).toHaveLength(5)
       commands.forEach(cmd => {
         expect(cmd).toMatch(/^\/\w+ - .+/)
       })

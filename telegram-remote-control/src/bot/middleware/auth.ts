@@ -17,6 +17,7 @@ export async function authMiddleware(ctx: MyContext, next: NextFunction) {
     return
   }
 
+  // Always check database for valid session - never trust memory alone
   const { data: session } = await supabase
     .from('telegram_sessions')
     .select('*, telegram_users!inner(*)')
@@ -25,10 +26,15 @@ export async function authMiddleware(ctx: MyContext, next: NextFunction) {
     .single()
 
   if (session) {
+    // Valid session found in database
     ctx.session.userId = session.user_id
     ctx.session.isAuthenticated = true
     return next()
   }
+
+  // No valid session in database, clear memory session
+  ctx.session.isAuthenticated = false
+  delete ctx.session.userId
 
   const { data: user } = await supabase
     .from('telegram_users')
@@ -44,7 +50,8 @@ export async function authMiddleware(ctx: MyContext, next: NextFunction) {
     return
   }
 
-  if (!ctx.session.isAuthenticated) {
+  // User exists but no valid session - need to authenticate
+  if (true) {  // Always require auth when no database session
     if (ctx.session.awaitingPassword) {
       const password = ctx.message?.text
       

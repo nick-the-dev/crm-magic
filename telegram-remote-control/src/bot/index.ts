@@ -7,7 +7,6 @@ import { startCommand } from './commands/start'
 import { helpCommand } from './commands/help'
 import { tasksConversation } from './conversations/tasks'
 import { statusCommand } from './commands/status'
-import { deployCommand } from './commands/deploy'
 import { webhookCommand } from './commands/webhook'
 
 export interface SessionData {
@@ -49,7 +48,6 @@ bot.command('generate_tasks', async (ctx: any) => {
   await ctx.conversation.enter('tasksConversation')
 })
 bot.command('status', statusCommand)
-bot.command('deploy', deployCommand)
 bot.command('webhook', webhookCommand)
 
 // Fallback for unknown messages
