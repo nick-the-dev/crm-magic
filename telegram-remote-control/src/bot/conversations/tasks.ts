@@ -22,78 +22,85 @@ export async function tasksConversation(
   }
 
   await ctx.reply(
-    `Which board should I use?\n` +
-    `Default: ${env.MONDAY_DEFAULT_BOARD_ID}\n` +
-    `(Press Enter or type board ID)`
+    `Which board should I use?\n\n` +
+    `📋 Current default: ${env.MONDAY_DEFAULT_BOARD_ID}\n` +
+    `➡️ Send - to use default\n` +
+    `➡️ Or enter a custom board ID`
   )
   
   const boardResponse = await conversation.waitFor(':text')
-  const boardText = boardResponse.message?.text?.toLowerCase()
+  const boardText = boardResponse.message?.text?.trim()
   
-  if (boardText === 'cancel') {
+  if (boardText?.toLowerCase() === 'cancel') {
     await ctx.reply('❌ Task creation cancelled.')
     return
   }
   
   collectedData.boardId = 
-    boardText === '' || boardText === 'skip' 
+    boardText === '-' || boardText === '' 
       ? env.MONDAY_DEFAULT_BOARD_ID 
       : boardResponse.message?.text
 
   await ctx.reply(
-    'What should I name the group?\n' +
-    '(Type "skip" for auto-generated name)'
+    'What should I name the group?\n\n' +
+    '🏷️ Default: Auto-generated based on project\n' +
+    '➡️ Send - for auto-generated name\n' +
+    '➡️ Or enter a custom group name'
   )
   
   const groupResponse = await conversation.waitFor(':text')
-  const groupText = groupResponse.message?.text?.toLowerCase()
+  const groupText = groupResponse.message?.text?.trim()
   
-  if (groupText === 'cancel') {
+  if (groupText?.toLowerCase() === 'cancel') {
     await ctx.reply('❌ Task creation cancelled.')
     return
   }
   
-  if (groupText !== 'skip') {
+  if (groupText !== '-' && groupText !== '') {
     collectedData.groupName = groupResponse.message?.text
   }
 
   await ctx.reply(
-    'Who should be assigned? (email addresses)\n' +
-    'Separate multiple emails with commas\n' +
-    '(Type "skip" for no assignment)'
+    'Who should be assigned?\n\n' +
+    '📧 Enter email addresses (comma-separated)\n' +
+    '➡️ Send - for no assignment\n' +
+    '➡️ Example: user1@example.com, user2@example.com'
   )
   
   const emailResponse = await conversation.waitFor(':text')
-  const emailText = emailResponse.message?.text?.toLowerCase()
+  const emailText = emailResponse.message?.text?.trim()
   
-  if (emailText === 'cancel') {
+  if (emailText?.toLowerCase() === 'cancel') {
     await ctx.reply('❌ Task creation cancelled.')
     return
   }
   
-  if (emailText !== 'skip') {
+  if (emailText !== '-' && emailText !== '') {
     collectedData.assigneeEmails = emailResponse.message?.text
   }
 
   await ctx.reply(
-    'How many weekly hours? (20-60)\n' +
-    'Default: 40 hours'
+    'How many weekly hours?\n\n' +
+    '⏰ Default: 40 hours\n' +
+    '📊 Valid range: 20-60 hours\n' +
+    '➡️ Send - for default (40 hours)\n' +
+    '➡️ Or enter a number between 20-60'
   )
   
   const hoursResponse = await conversation.waitFor(':text')
-  const hoursText = hoursResponse.message?.text?.toLowerCase()
+  const hoursText = hoursResponse.message?.text?.trim()
   
-  if (hoursText === 'cancel') {
+  if (hoursText?.toLowerCase() === 'cancel') {
     await ctx.reply('❌ Task creation cancelled.')
     return
   }
   
-  if (hoursText === 'skip' || hoursText === '') {
+  if (hoursText === '-' || hoursText === '') {
     collectedData.weeklyHours = 40
   } else {
     const hours = parseInt(hoursResponse.message?.text || '40')
-    if (hours < 20 || hours > 60) {
-      await ctx.reply('⚠️ Hours must be between 20 and 60. Using default: 40')
+    if (isNaN(hours) || hours < 20 || hours > 60) {
+      await ctx.reply('⚠️ Invalid input. Using default: 40 hours')
       collectedData.weeklyHours = 40
     } else {
       collectedData.weeklyHours = hours
@@ -101,20 +108,22 @@ export async function tasksConversation(
   }
 
   await ctx.reply(
-    'Which provinces/areas? (for task distribution)\n' +
-    'Example: Ontario, Quebec, British Columbia\n' +
-    '(Type "skip" for random distribution)'
+    'Which provinces/areas for task distribution?\n\n' +
+    '🗺️ Default: Random distribution\n' +
+    '📍 Example: Ontario, Quebec, British Columbia\n' +
+    '➡️ Send - for random distribution\n' +
+    '➡️ Or enter provinces (comma-separated)'
   )
   
   const provincesResponse = await conversation.waitFor(':text')
-  const provincesText = provincesResponse.message?.text?.toLowerCase()
+  const provincesText = provincesResponse.message?.text?.trim()
   
-  if (provincesText === 'cancel') {
+  if (provincesText?.toLowerCase() === 'cancel') {
     await ctx.reply('❌ Task creation cancelled.')
     return
   }
   
-  if (provincesText !== 'skip') {
+  if (provincesText !== '-' && provincesText !== '') {
     collectedData.provinces = provincesResponse.message?.text
   }
 
