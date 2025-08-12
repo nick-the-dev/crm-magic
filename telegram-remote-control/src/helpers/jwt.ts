@@ -6,9 +6,9 @@ interface UserPayload {
 }
 
 export function sign(payload: UserPayload) {
-  return signBase(payload, env.JWT)
+  return signBase(payload, env.JWT_SECRET)
 }
 
 export function verify(token: string) {
-  return verifyBase(token, env.JWT) as UserPayload
+  return verifyBase(token, env.JWT_SECRET) as UserPayload
 }

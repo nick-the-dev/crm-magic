@@ -1,11 +1,11 @@
-import { Conversation } from '@grammyjs/conversations'
-import { MyContext } from '../index'
+import { type Conversation } from '@grammyjs/conversations'
+import { type MyContext } from '../index'
 import { supabase } from '@/helpers/supabase'
 import axios from 'axios'
 import env from '@/helpers/env'
 
 export async function tasksConversation(
-  conversation: Conversation<MyContext>,
+  conversation: Conversation<MyContext, MyContext>,
   ctx: MyContext
 ) {
   await ctx.reply('📝 Let\'s create some Monday.com tasks!\n\nPlease describe your project:')
