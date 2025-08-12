@@ -1,6 +1,6 @@
 # Monday.com AI Tasks Generator
 
-Automatically generate realistic project tasks with AI and add them to Monday.com boards with intelligent user assignment and location-based task distribution.
+Automatically generate realistic project tasks with AI and add them to Monday.com boards with intelligent user assignment and location-based task distribution. Includes n8n workflow automation and Telegram bot for remote control.
 
 ## 🚀 Quick Start
 
@@ -38,6 +38,10 @@ crm-magic/
 │   └── TESTING.md             # Consolidated testing guide
 ├── workflows/                  
 │   └── monday-tasks-generator-enhanced.json
+├── telegram-remote-control/   # Telegram bot for remote control
+│   ├── src/                   # Bot source code
+│   ├── scripts/               # Management scripts
+│   └── README.md              # Bot documentation
 ├── index.html                 # Web form interface
 ├── README.md                  # This file
 └── CLAUDE.md                  # Claude Code instructions
