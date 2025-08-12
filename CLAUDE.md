@@ -13,8 +13,6 @@ crm-magic/
 │   └── TESTING.md             # Consolidated testing guide
 ├── workflows/                  # n8n workflow files
 │   └── monday-tasks-generator-enhanced.json
-├── test/                      # Test files
-│   └── test-workflow.js
 ├── index.html                 # Web form interface
 ├── README.md                  # Project overview
 └── CLAUDE.md                  # This file - Claude instructions
@@ -318,7 +316,6 @@ mcp__github__mark_all_notifications_read()
 
 ### File Locations
 - Main workflow: `workflows/monday-tasks-generator-enhanced.json`
-- Test script: `test/test-workflow.js`
 - Testing guide: `docs/TESTING.md`
 - Web form: `index.html`
 

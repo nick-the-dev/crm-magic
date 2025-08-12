@@ -38,8 +38,6 @@ crm-magic/
 │   └── TESTING.md             # Consolidated testing guide
 ├── workflows/                  
 │   └── monday-tasks-generator-enhanced.json
-├── test/                      
-│   └── test-workflow.js       
 ├── index.html                 # Web form interface
 ├── README.md                  # This file
 └── CLAUDE.md                  # Claude Code instructions
